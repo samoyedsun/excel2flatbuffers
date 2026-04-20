@@ -1,0 +1,29 @@
+{
+  "mydb_misc_tbl": {
+      "MydbMiscInfo": {
+          "编号": "id",
+          "类型": "type",
+          "数据": "data"
+      },
+      "MydbMiscType1Data": {
+          "编号": "id",
+          "字段": "field"
+      },
+      "MydbMiscType2Data": {
+          "编号": "id",
+          "字段": "field"
+      },
+      "MydbMiscType3Data": {
+          "编号": "id",
+          "字段1": "field1",
+          "字段2": "field2"
+      },
+      "MydbMiscType4Data": {
+          "编号": "id",
+          "字段1": "field1",
+          "字段2": "field2",
+          "字段3": "field3",
+          "字段4": "field4"
+      }
+  }
+}

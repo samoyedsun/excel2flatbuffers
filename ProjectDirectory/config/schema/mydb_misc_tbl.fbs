@@ -1,0 +1,42 @@
+struct MydbMiscInfo {
+    id:uint32 = 0;      // 默认值为 0
+    type:uint32 = 0;    // 默认值为 0
+    data:uint32 = 0;
+}
+
+table MydbMiscType1Data {
+    id:uint32 = 0;
+    field:string;
+}
+
+struct MydbMiscType2Data {
+    id:uint32 = 0;
+    field:uint32 = 0;
+}
+
+struct MydbMiscType3Data {
+    id:uint32 = 0;
+    field1:uint32 = 0;
+    field2:uint32 = 0;
+}
+
+struct MydbMiscType4Data {
+    id:uint32 = 0;
+    field1:uint32 = 0;
+    field2:uint32 = 0;
+    field3:uint32 = 0;
+    field4:uint32 = 0;
+}
+
+table MydbMiscTbl {
+	misc_infos:[MydbMiscInfo];
+	type1_datas:[MydbMiscType1Data];
+	type2_datas:[MydbMiscType2Data];
+	type3_datas:[MydbMiscType3Data];
+	type4_datas:[MydbMiscType4Data];
+	
+	__date_time:string;
+	__mac_address:string;
+}
+
+root_type MydbMiscTbl;

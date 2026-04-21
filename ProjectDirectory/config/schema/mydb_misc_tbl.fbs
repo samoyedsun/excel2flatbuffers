@@ -1,4 +1,4 @@
-struct MydbMiscInfo {
+table MydbMiscInfo {
     id:uint32 = 0;      // 默认值为 0
     type:uint32 = 0;    // 默认值为 0
     data:uint32 = 0;
@@ -9,18 +9,18 @@ table MydbMiscType1Data {
     field:string;
 }
 
-struct MydbMiscType2Data {
+table MydbMiscType2Data {
     id:uint32 = 0;
     field:uint32 = 0;
 }
 
-struct MydbMiscType3Data {
+table MydbMiscType3Data {
     id:uint32 = 0;
     field1:uint32 = 0;
     field2:uint32 = 0;
 }
 
-struct MydbMiscType4Data {
+table MydbMiscType4Data {
     id:uint32 = 0;
     field1:uint32 = 0;
     field2:uint32 = 0;
@@ -36,6 +36,7 @@ table MydbMiscTbl {
 	type4_datas:[MydbMiscType4Data];
 	
 	__date_time:string;
+	__host_info:string;
 	__mac_address:string;
 }
 

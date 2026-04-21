@@ -101,6 +101,7 @@ int main()
 		}
 	}
 	std::cout << "导表时间：" << pTbl->__date_time()->str() << std::endl;
+	std::cout << "导表主机：" << pTbl->__host_info()->str() << std::endl;
 	std::cout << "导表地址：" << pTbl->__mac_address()->str() << std::endl;
 	system("pause");
 }

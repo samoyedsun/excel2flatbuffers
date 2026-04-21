@@ -14,140 +14,84 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
              "Non-compatible flatbuffers version included");
 
 struct MydbMiscInfo;
+struct MydbMiscInfoBuilder;
 
 struct MydbMiscType1Data;
 struct MydbMiscType1DataBuilder;
 
 struct MydbMiscType2Data;
+struct MydbMiscType2DataBuilder;
 
 struct MydbMiscType3Data;
+struct MydbMiscType3DataBuilder;
 
 struct MydbMiscType4Data;
+struct MydbMiscType4DataBuilder;
 
 struct MydbMiscTbl;
 struct MydbMiscTblBuilder;
 
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) MydbMiscInfo FLATBUFFERS_FINAL_CLASS {
- private:
-  uint32_t id_;
-  uint32_t type_;
-  uint32_t data_;
-
- public:
-  MydbMiscInfo()
-      : id_(0),
-        type_(0),
-        data_(0) {
-  }
-  MydbMiscInfo(uint32_t _id, uint32_t _type, uint32_t _data)
-      : id_(::flatbuffers::EndianScalar(_id)),
-        type_(::flatbuffers::EndianScalar(_type)),
-        data_(::flatbuffers::EndianScalar(_data)) {
-  }
+struct MydbMiscInfo FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MydbMiscInfoBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ID = 4,
+    VT_TYPE = 6,
+    VT_DATA = 8
+  };
   uint32_t id() const {
-    return ::flatbuffers::EndianScalar(id_);
+    return GetField<uint32_t>(VT_ID, 0);
   }
   uint32_t type() const {
-    return ::flatbuffers::EndianScalar(type_);
+    return GetField<uint32_t>(VT_TYPE, 0);
   }
   uint32_t data() const {
-    return ::flatbuffers::EndianScalar(data_);
+    return GetField<uint32_t>(VT_DATA, 0);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_ID, 4) &&
+           VerifyField<uint32_t>(verifier, VT_TYPE, 4) &&
+           VerifyField<uint32_t>(verifier, VT_DATA, 4) &&
+           verifier.EndTable();
   }
 };
-FLATBUFFERS_STRUCT_END(MydbMiscInfo, 12);
 
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) MydbMiscType2Data FLATBUFFERS_FINAL_CLASS {
- private:
-  uint32_t id_;
-  uint32_t field_;
-
- public:
-  MydbMiscType2Data()
-      : id_(0),
-        field_(0) {
+struct MydbMiscInfoBuilder {
+  typedef MydbMiscInfo Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_id(uint32_t id) {
+    fbb_.AddElement<uint32_t>(MydbMiscInfo::VT_ID, id, 0);
   }
-  MydbMiscType2Data(uint32_t _id, uint32_t _field)
-      : id_(::flatbuffers::EndianScalar(_id)),
-        field_(::flatbuffers::EndianScalar(_field)) {
+  void add_type(uint32_t type) {
+    fbb_.AddElement<uint32_t>(MydbMiscInfo::VT_TYPE, type, 0);
   }
-  uint32_t id() const {
-    return ::flatbuffers::EndianScalar(id_);
+  void add_data(uint32_t data) {
+    fbb_.AddElement<uint32_t>(MydbMiscInfo::VT_DATA, data, 0);
   }
-  uint32_t field() const {
-    return ::flatbuffers::EndianScalar(field_);
+  explicit MydbMiscInfoBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<MydbMiscInfo> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<MydbMiscInfo>(end);
+    return o;
   }
 };
-FLATBUFFERS_STRUCT_END(MydbMiscType2Data, 8);
 
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) MydbMiscType3Data FLATBUFFERS_FINAL_CLASS {
- private:
-  uint32_t id_;
-  uint32_t field1_;
-  uint32_t field2_;
-
- public:
-  MydbMiscType3Data()
-      : id_(0),
-        field1_(0),
-        field2_(0) {
-  }
-  MydbMiscType3Data(uint32_t _id, uint32_t _field1, uint32_t _field2)
-      : id_(::flatbuffers::EndianScalar(_id)),
-        field1_(::flatbuffers::EndianScalar(_field1)),
-        field2_(::flatbuffers::EndianScalar(_field2)) {
-  }
-  uint32_t id() const {
-    return ::flatbuffers::EndianScalar(id_);
-  }
-  uint32_t field1() const {
-    return ::flatbuffers::EndianScalar(field1_);
-  }
-  uint32_t field2() const {
-    return ::flatbuffers::EndianScalar(field2_);
-  }
-};
-FLATBUFFERS_STRUCT_END(MydbMiscType3Data, 12);
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) MydbMiscType4Data FLATBUFFERS_FINAL_CLASS {
- private:
-  uint32_t id_;
-  uint32_t field1_;
-  uint32_t field2_;
-  uint32_t field3_;
-  uint32_t field4_;
-
- public:
-  MydbMiscType4Data()
-      : id_(0),
-        field1_(0),
-        field2_(0),
-        field3_(0),
-        field4_(0) {
-  }
-  MydbMiscType4Data(uint32_t _id, uint32_t _field1, uint32_t _field2, uint32_t _field3, uint32_t _field4)
-      : id_(::flatbuffers::EndianScalar(_id)),
-        field1_(::flatbuffers::EndianScalar(_field1)),
-        field2_(::flatbuffers::EndianScalar(_field2)),
-        field3_(::flatbuffers::EndianScalar(_field3)),
-        field4_(::flatbuffers::EndianScalar(_field4)) {
-  }
-  uint32_t id() const {
-    return ::flatbuffers::EndianScalar(id_);
-  }
-  uint32_t field1() const {
-    return ::flatbuffers::EndianScalar(field1_);
-  }
-  uint32_t field2() const {
-    return ::flatbuffers::EndianScalar(field2_);
-  }
-  uint32_t field3() const {
-    return ::flatbuffers::EndianScalar(field3_);
-  }
-  uint32_t field4() const {
-    return ::flatbuffers::EndianScalar(field4_);
-  }
-};
-FLATBUFFERS_STRUCT_END(MydbMiscType4Data, 20);
+inline ::flatbuffers::Offset<MydbMiscInfo> CreateMydbMiscInfo(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t id = 0,
+    uint32_t type = 0,
+    uint32_t data = 0) {
+  MydbMiscInfoBuilder builder_(_fbb);
+  builder_.add_data(data);
+  builder_.add_type(type);
+  builder_.add_id(id);
+  return builder_.Finish();
+}
 
 struct MydbMiscType1Data FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MydbMiscType1DataBuilder Builder;
@@ -213,6 +157,202 @@ inline ::flatbuffers::Offset<MydbMiscType1Data> CreateMydbMiscType1DataDirect(
       field__);
 }
 
+struct MydbMiscType2Data FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MydbMiscType2DataBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ID = 4,
+    VT_FIELD = 6
+  };
+  uint32_t id() const {
+    return GetField<uint32_t>(VT_ID, 0);
+  }
+  uint32_t field() const {
+    return GetField<uint32_t>(VT_FIELD, 0);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_ID, 4) &&
+           VerifyField<uint32_t>(verifier, VT_FIELD, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct MydbMiscType2DataBuilder {
+  typedef MydbMiscType2Data Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_id(uint32_t id) {
+    fbb_.AddElement<uint32_t>(MydbMiscType2Data::VT_ID, id, 0);
+  }
+  void add_field(uint32_t field) {
+    fbb_.AddElement<uint32_t>(MydbMiscType2Data::VT_FIELD, field, 0);
+  }
+  explicit MydbMiscType2DataBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<MydbMiscType2Data> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<MydbMiscType2Data>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<MydbMiscType2Data> CreateMydbMiscType2Data(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t id = 0,
+    uint32_t field = 0) {
+  MydbMiscType2DataBuilder builder_(_fbb);
+  builder_.add_field(field);
+  builder_.add_id(id);
+  return builder_.Finish();
+}
+
+struct MydbMiscType3Data FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MydbMiscType3DataBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ID = 4,
+    VT_FIELD1 = 6,
+    VT_FIELD2 = 8
+  };
+  uint32_t id() const {
+    return GetField<uint32_t>(VT_ID, 0);
+  }
+  uint32_t field1() const {
+    return GetField<uint32_t>(VT_FIELD1, 0);
+  }
+  uint32_t field2() const {
+    return GetField<uint32_t>(VT_FIELD2, 0);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_ID, 4) &&
+           VerifyField<uint32_t>(verifier, VT_FIELD1, 4) &&
+           VerifyField<uint32_t>(verifier, VT_FIELD2, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct MydbMiscType3DataBuilder {
+  typedef MydbMiscType3Data Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_id(uint32_t id) {
+    fbb_.AddElement<uint32_t>(MydbMiscType3Data::VT_ID, id, 0);
+  }
+  void add_field1(uint32_t field1) {
+    fbb_.AddElement<uint32_t>(MydbMiscType3Data::VT_FIELD1, field1, 0);
+  }
+  void add_field2(uint32_t field2) {
+    fbb_.AddElement<uint32_t>(MydbMiscType3Data::VT_FIELD2, field2, 0);
+  }
+  explicit MydbMiscType3DataBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<MydbMiscType3Data> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<MydbMiscType3Data>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<MydbMiscType3Data> CreateMydbMiscType3Data(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t id = 0,
+    uint32_t field1 = 0,
+    uint32_t field2 = 0) {
+  MydbMiscType3DataBuilder builder_(_fbb);
+  builder_.add_field2(field2);
+  builder_.add_field1(field1);
+  builder_.add_id(id);
+  return builder_.Finish();
+}
+
+struct MydbMiscType4Data FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MydbMiscType4DataBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ID = 4,
+    VT_FIELD1 = 6,
+    VT_FIELD2 = 8,
+    VT_FIELD3 = 10,
+    VT_FIELD4 = 12
+  };
+  uint32_t id() const {
+    return GetField<uint32_t>(VT_ID, 0);
+  }
+  uint32_t field1() const {
+    return GetField<uint32_t>(VT_FIELD1, 0);
+  }
+  uint32_t field2() const {
+    return GetField<uint32_t>(VT_FIELD2, 0);
+  }
+  uint32_t field3() const {
+    return GetField<uint32_t>(VT_FIELD3, 0);
+  }
+  uint32_t field4() const {
+    return GetField<uint32_t>(VT_FIELD4, 0);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_ID, 4) &&
+           VerifyField<uint32_t>(verifier, VT_FIELD1, 4) &&
+           VerifyField<uint32_t>(verifier, VT_FIELD2, 4) &&
+           VerifyField<uint32_t>(verifier, VT_FIELD3, 4) &&
+           VerifyField<uint32_t>(verifier, VT_FIELD4, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct MydbMiscType4DataBuilder {
+  typedef MydbMiscType4Data Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_id(uint32_t id) {
+    fbb_.AddElement<uint32_t>(MydbMiscType4Data::VT_ID, id, 0);
+  }
+  void add_field1(uint32_t field1) {
+    fbb_.AddElement<uint32_t>(MydbMiscType4Data::VT_FIELD1, field1, 0);
+  }
+  void add_field2(uint32_t field2) {
+    fbb_.AddElement<uint32_t>(MydbMiscType4Data::VT_FIELD2, field2, 0);
+  }
+  void add_field3(uint32_t field3) {
+    fbb_.AddElement<uint32_t>(MydbMiscType4Data::VT_FIELD3, field3, 0);
+  }
+  void add_field4(uint32_t field4) {
+    fbb_.AddElement<uint32_t>(MydbMiscType4Data::VT_FIELD4, field4, 0);
+  }
+  explicit MydbMiscType4DataBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<MydbMiscType4Data> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<MydbMiscType4Data>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<MydbMiscType4Data> CreateMydbMiscType4Data(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t id = 0,
+    uint32_t field1 = 0,
+    uint32_t field2 = 0,
+    uint32_t field3 = 0,
+    uint32_t field4 = 0) {
+  MydbMiscType4DataBuilder builder_(_fbb);
+  builder_.add_field4(field4);
+  builder_.add_field3(field3);
+  builder_.add_field2(field2);
+  builder_.add_field1(field1);
+  builder_.add_id(id);
+  return builder_.Finish();
+}
+
 struct MydbMiscTbl FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MydbMiscTblBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -222,25 +362,29 @@ struct MydbMiscTbl FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_TYPE3_DATAS = 10,
     VT_TYPE4_DATAS = 12,
     VT___DATE_TIME = 14,
-    VT___MAC_ADDRESS = 16
+    VT___HOST_INFO = 16,
+    VT___MAC_ADDRESS = 18
   };
-  const ::flatbuffers::Vector<const MydbMiscInfo *> *misc_infos() const {
-    return GetPointer<const ::flatbuffers::Vector<const MydbMiscInfo *> *>(VT_MISC_INFOS);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscInfo>> *misc_infos() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscInfo>> *>(VT_MISC_INFOS);
   }
   const ::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType1Data>> *type1_datas() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType1Data>> *>(VT_TYPE1_DATAS);
   }
-  const ::flatbuffers::Vector<const MydbMiscType2Data *> *type2_datas() const {
-    return GetPointer<const ::flatbuffers::Vector<const MydbMiscType2Data *> *>(VT_TYPE2_DATAS);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType2Data>> *type2_datas() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType2Data>> *>(VT_TYPE2_DATAS);
   }
-  const ::flatbuffers::Vector<const MydbMiscType3Data *> *type3_datas() const {
-    return GetPointer<const ::flatbuffers::Vector<const MydbMiscType3Data *> *>(VT_TYPE3_DATAS);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType3Data>> *type3_datas() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType3Data>> *>(VT_TYPE3_DATAS);
   }
-  const ::flatbuffers::Vector<const MydbMiscType4Data *> *type4_datas() const {
-    return GetPointer<const ::flatbuffers::Vector<const MydbMiscType4Data *> *>(VT_TYPE4_DATAS);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType4Data>> *type4_datas() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType4Data>> *>(VT_TYPE4_DATAS);
   }
   const ::flatbuffers::String *__date_time() const {
     return GetPointer<const ::flatbuffers::String *>(VT___DATE_TIME);
+  }
+  const ::flatbuffers::String *__host_info() const {
+    return GetPointer<const ::flatbuffers::String *>(VT___HOST_INFO);
   }
   const ::flatbuffers::String *__mac_address() const {
     return GetPointer<const ::flatbuffers::String *>(VT___MAC_ADDRESS);
@@ -250,17 +394,23 @@ struct MydbMiscTbl FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_MISC_INFOS) &&
            verifier.VerifyVector(misc_infos()) &&
+           verifier.VerifyVectorOfTables(misc_infos()) &&
            VerifyOffset(verifier, VT_TYPE1_DATAS) &&
            verifier.VerifyVector(type1_datas()) &&
            verifier.VerifyVectorOfTables(type1_datas()) &&
            VerifyOffset(verifier, VT_TYPE2_DATAS) &&
            verifier.VerifyVector(type2_datas()) &&
+           verifier.VerifyVectorOfTables(type2_datas()) &&
            VerifyOffset(verifier, VT_TYPE3_DATAS) &&
            verifier.VerifyVector(type3_datas()) &&
+           verifier.VerifyVectorOfTables(type3_datas()) &&
            VerifyOffset(verifier, VT_TYPE4_DATAS) &&
            verifier.VerifyVector(type4_datas()) &&
+           verifier.VerifyVectorOfTables(type4_datas()) &&
            VerifyOffset(verifier, VT___DATE_TIME) &&
            verifier.VerifyString(__date_time()) &&
+           VerifyOffset(verifier, VT___HOST_INFO) &&
+           verifier.VerifyString(__host_info()) &&
            VerifyOffset(verifier, VT___MAC_ADDRESS) &&
            verifier.VerifyString(__mac_address()) &&
            verifier.EndTable();
@@ -271,23 +421,26 @@ struct MydbMiscTblBuilder {
   typedef MydbMiscTbl Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_misc_infos(::flatbuffers::Offset<::flatbuffers::Vector<const MydbMiscInfo *>> misc_infos) {
+  void add_misc_infos(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscInfo>>> misc_infos) {
     fbb_.AddOffset(MydbMiscTbl::VT_MISC_INFOS, misc_infos);
   }
   void add_type1_datas(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType1Data>>> type1_datas) {
     fbb_.AddOffset(MydbMiscTbl::VT_TYPE1_DATAS, type1_datas);
   }
-  void add_type2_datas(::flatbuffers::Offset<::flatbuffers::Vector<const MydbMiscType2Data *>> type2_datas) {
+  void add_type2_datas(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType2Data>>> type2_datas) {
     fbb_.AddOffset(MydbMiscTbl::VT_TYPE2_DATAS, type2_datas);
   }
-  void add_type3_datas(::flatbuffers::Offset<::flatbuffers::Vector<const MydbMiscType3Data *>> type3_datas) {
+  void add_type3_datas(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType3Data>>> type3_datas) {
     fbb_.AddOffset(MydbMiscTbl::VT_TYPE3_DATAS, type3_datas);
   }
-  void add_type4_datas(::flatbuffers::Offset<::flatbuffers::Vector<const MydbMiscType4Data *>> type4_datas) {
+  void add_type4_datas(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType4Data>>> type4_datas) {
     fbb_.AddOffset(MydbMiscTbl::VT_TYPE4_DATAS, type4_datas);
   }
   void add___date_time(::flatbuffers::Offset<::flatbuffers::String> __date_time) {
     fbb_.AddOffset(MydbMiscTbl::VT___DATE_TIME, __date_time);
+  }
+  void add___host_info(::flatbuffers::Offset<::flatbuffers::String> __host_info) {
+    fbb_.AddOffset(MydbMiscTbl::VT___HOST_INFO, __host_info);
   }
   void add___mac_address(::flatbuffers::Offset<::flatbuffers::String> __mac_address) {
     fbb_.AddOffset(MydbMiscTbl::VT___MAC_ADDRESS, __mac_address);
@@ -305,15 +458,17 @@ struct MydbMiscTblBuilder {
 
 inline ::flatbuffers::Offset<MydbMiscTbl> CreateMydbMiscTbl(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::Vector<const MydbMiscInfo *>> misc_infos = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscInfo>>> misc_infos = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType1Data>>> type1_datas = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<const MydbMiscType2Data *>> type2_datas = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<const MydbMiscType3Data *>> type3_datas = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<const MydbMiscType4Data *>> type4_datas = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType2Data>>> type2_datas = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType3Data>>> type3_datas = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<MydbMiscType4Data>>> type4_datas = 0,
     ::flatbuffers::Offset<::flatbuffers::String> __date_time = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> __host_info = 0,
     ::flatbuffers::Offset<::flatbuffers::String> __mac_address = 0) {
   MydbMiscTblBuilder builder_(_fbb);
   builder_.add___mac_address(__mac_address);
+  builder_.add___host_info(__host_info);
   builder_.add___date_time(__date_time);
   builder_.add_type4_datas(type4_datas);
   builder_.add_type3_datas(type3_datas);
@@ -325,19 +480,21 @@ inline ::flatbuffers::Offset<MydbMiscTbl> CreateMydbMiscTbl(
 
 inline ::flatbuffers::Offset<MydbMiscTbl> CreateMydbMiscTblDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<MydbMiscInfo> *misc_infos = nullptr,
+    const std::vector<::flatbuffers::Offset<MydbMiscInfo>> *misc_infos = nullptr,
     const std::vector<::flatbuffers::Offset<MydbMiscType1Data>> *type1_datas = nullptr,
-    const std::vector<MydbMiscType2Data> *type2_datas = nullptr,
-    const std::vector<MydbMiscType3Data> *type3_datas = nullptr,
-    const std::vector<MydbMiscType4Data> *type4_datas = nullptr,
+    const std::vector<::flatbuffers::Offset<MydbMiscType2Data>> *type2_datas = nullptr,
+    const std::vector<::flatbuffers::Offset<MydbMiscType3Data>> *type3_datas = nullptr,
+    const std::vector<::flatbuffers::Offset<MydbMiscType4Data>> *type4_datas = nullptr,
     const char *__date_time = nullptr,
+    const char *__host_info = nullptr,
     const char *__mac_address = nullptr) {
-  auto misc_infos__ = misc_infos ? _fbb.CreateVectorOfStructs<MydbMiscInfo>(*misc_infos) : 0;
+  auto misc_infos__ = misc_infos ? _fbb.CreateVector<::flatbuffers::Offset<MydbMiscInfo>>(*misc_infos) : 0;
   auto type1_datas__ = type1_datas ? _fbb.CreateVector<::flatbuffers::Offset<MydbMiscType1Data>>(*type1_datas) : 0;
-  auto type2_datas__ = type2_datas ? _fbb.CreateVectorOfStructs<MydbMiscType2Data>(*type2_datas) : 0;
-  auto type3_datas__ = type3_datas ? _fbb.CreateVectorOfStructs<MydbMiscType3Data>(*type3_datas) : 0;
-  auto type4_datas__ = type4_datas ? _fbb.CreateVectorOfStructs<MydbMiscType4Data>(*type4_datas) : 0;
+  auto type2_datas__ = type2_datas ? _fbb.CreateVector<::flatbuffers::Offset<MydbMiscType2Data>>(*type2_datas) : 0;
+  auto type3_datas__ = type3_datas ? _fbb.CreateVector<::flatbuffers::Offset<MydbMiscType3Data>>(*type3_datas) : 0;
+  auto type4_datas__ = type4_datas ? _fbb.CreateVector<::flatbuffers::Offset<MydbMiscType4Data>>(*type4_datas) : 0;
   auto __date_time__ = __date_time ? _fbb.CreateString(__date_time) : 0;
+  auto __host_info__ = __host_info ? _fbb.CreateString(__host_info) : 0;
   auto __mac_address__ = __mac_address ? _fbb.CreateString(__mac_address) : 0;
   return CreateMydbMiscTbl(
       _fbb,
@@ -347,6 +504,7 @@ inline ::flatbuffers::Offset<MydbMiscTbl> CreateMydbMiscTblDirect(
       type3_datas__,
       type4_datas__,
       __date_time__,
+      __host_info__,
       __mac_address__);
 }
 

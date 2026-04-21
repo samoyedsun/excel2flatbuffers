@@ -4,10 +4,14 @@ ExcelToFlatBuffer::ExcelToFlatBuffer() {
     m_pSchema = nullptr;
 }
 
-void ExcelToFlatBuffer::SetSymbol(const std::string& dataTime, const std::string& macAddress) {
+void ExcelToFlatBuffer::SetSymbol(const std::string& dataTime
+    , const std::string& hostInfo
+    , const std::string& macAddress) {
     m_dateTime = dataTime;
+    m_hostInfo = hostInfo;
     m_macAddress = macAddress;
     std::cout << "时间：" << m_dateTime << std::endl;
+    std::cout << "主机：" << m_hostInfo << std::endl;
     std::cout << "地址：" << m_macAddress << std::endl;
 }
 
@@ -170,8 +174,9 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
     case reflection::UInt:
     {
         uint32_t outVal;
-        if (std::sscanf(value.c_str(), "%u", &outVal) == 1)
+        if (std::sscanf(value.c_str(), "%u", &outVal) == 1) {
             builder.AddElement<uint32_t>(pField->offset(), outVal, pField->default_integer());
+        }
         else
             std::cerr << "Failed to convert '" << value << "' to uint32 for field " << pField->name()->str() << std::endl;
     }
@@ -212,6 +217,10 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
             std::cerr << "Failed to convert '" << value << "' to double for field " << pField->name()->str() << std::endl;
     }
     break;
+    case reflection::Array:
+    {
+        std::cerr << "Error: array type is not supported yet: " << pField->name()->str() << std::endl;
+    }
     case reflection::String:
     {
         auto strOffset = builder.CreateString(value);
@@ -282,7 +291,7 @@ void ExcelToFlatBuffer::ReadExcelSheet(xlnt::worksheet& ws,
                 return;
             }
             std::string value = UTF8ToGB2312(cell.to_string().c_str());
-            ParseField(builder, pField, key, value);
+            ParseField(builder, pField, key, StrTrim(value));
             });
 
         auto infoOffset = builder.EndTable(tableStart);
@@ -375,6 +384,10 @@ bool ExcelToFlatBuffer::BuildOutput(const std::string& outputPath) {
                     if (pField->type()->base_type() == reflection::String) {
                         if (pField->name()->str() == "__date_time") {
                             auto strOffset = builder.CreateString(m_dateTime);
+                            builder.AddOffset(pField->offset(), strOffset);
+                        }
+                        else if (pField->name()->str() == "__host_info") {
+                            auto strOffset = builder.CreateString(m_hostInfo);
                             builder.AddOffset(pField->offset(), strOffset);
                         }
                         else if (pField->name()->str() == "__mac_address") {

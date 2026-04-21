@@ -117,10 +117,25 @@ void WriteFile(const std::string& filename, std::vector<uint8_t>& data) {
 	file.close();
 	std::cout << "写入文件: " << filename << " (" << data.size() << " 字节)" << std::endl;
 }
-
-std::string StringTrim(const std::string& str) {
+std::string StrTrim(const std::string& str) {
 	size_t start = str.find_first_not_of(" \t\n\r");
 	if (start == std::string::npos) return "";
 	size_t end = str.find_last_not_of(" \t\n\r");
 	return str.substr(start, end - start + 1);
+}
+std::string StrJoin(const std::vector<std::string>& elements, const std::string& delimiter) {
+	if (elements.empty()) {
+		return "";
+	}
+
+	std::string result;
+	result.reserve(elements.size() * 20); // 粗略预分配
+
+	result += elements[0];
+	for (size_t i = 1; i < elements.size(); ++i) {
+		result += delimiter;
+		result += elements[i];
+	}
+
+	return result;
 }

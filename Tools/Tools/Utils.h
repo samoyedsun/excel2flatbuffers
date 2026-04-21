@@ -12,8 +12,7 @@ std::string GetFilenameWithoutExt(const std::string& path);
 std::vector<uint8_t> LoadFile(const std::string& filename);
 void WriteFile(const std::string& filename, std::vector<uint8_t>& data);
 
-std::string StringTrim(const std::string& str);
-
-
+std::string StrTrim(const std::string& str);
+std::string StrJoin(const std::vector<std::string>& elements, const std::string& delimiter);
 
 #endif  // INCLUDE_UTILS_HPP_

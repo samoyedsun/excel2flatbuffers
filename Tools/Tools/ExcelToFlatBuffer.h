@@ -19,7 +19,7 @@ public:
     // 构造函数
     ExcelToFlatBuffer();
 
-    void SetSymbol(const std::string& dataTime, const std::string& macAddress);
+    void SetSymbol(const std::string& dataTime, const std::string& hostInfo, const std::string& macAddress);
 
     // 执行转换
     bool Convert(const std::string& metadataPath, const std::string& bfbsPath,
@@ -60,6 +60,7 @@ private:
     std::vector<uint8_t> m_outputData;
 
     std::string m_dateTime;
+    std::string m_hostInfo;
     std::string m_macAddress;
 };
 

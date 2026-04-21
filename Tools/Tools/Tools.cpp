@@ -8,26 +8,9 @@
 struct AdapterInfo {
     std::string mac;
     std::vector<std::string> ips;
-
-    static std::string join(const std::vector<std::string>& elements, const std::string& delimiter) {
-        if (elements.empty()) {
-            return "";
-        }
-
-        std::string result;
-        result.reserve(elements.size() * 20); // ¥÷¬‘‘§∑÷≈‰
-
-        result += elements[0];
-        for (size_t i = 1; i < elements.size(); ++i) {
-            result += delimiter;
-            result += elements[i];
-        }
-
-        return result;
-    }
     
     std::string dump() const {
-        return mac + "," + AdapterInfo::join(ips, ",");
+        return mac + "," + StrJoin(ips, ",");
     }
 };
 
@@ -85,7 +68,29 @@ std::string GetLocalAddress() {
     for (const auto& adapter : adapters) {
         vec.emplace_back(adapter.dump());
     }
-    return AdapterInfo::join(vec, "|");
+    return StrJoin(vec, "|");
+}
+
+std::string GetHostInfo() {
+    std::string hostName;
+    do {
+        DWORD size = 0;
+        GetComputerNameW(nullptr, &size);
+        std::vector<wchar_t> buffer(size);
+        if (!GetComputerNameW(buffer.data(), &size))
+            break;
+        hostName = WcharToChar(buffer.data());
+    } while (false);
+    std::string userName;
+    do {
+        DWORD size = 0;
+        GetUserNameW(nullptr, &size);
+        std::vector<wchar_t> buffer(size);
+        if (!GetUserNameW(buffer.data(), &size))
+            break;
+        userName = WcharToChar(buffer.data());
+    } while (false);
+    return StrJoin({ UTF8ToGB2312(hostName.c_str()), UTF8ToGB2312(userName.c_str()) }, "|");
 }
 
 std::string GetCurrentTimeString() {
@@ -112,7 +117,7 @@ int main(int argc, char* argv[]) {
     std::cout << "excelFile: " << excelFile << std::endl;
     std::cout << "outputFile: " << outputFile << std::endl;
     ExcelToFlatBuffer converter;
-    converter.SetSymbol(GetCurrentTimeString(), GetLocalAddress());
+    converter.SetSymbol(GetCurrentTimeString(), GetHostInfo(), GetLocalAddress());
     if (!converter.Convert(metadataFile, bfbsFile, excelFile, outputFile)) {
         std::cerr << "◊™ªª ß∞‹: " << converter.GetLastError() << std::endl;
         system("pause");

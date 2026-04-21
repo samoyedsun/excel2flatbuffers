@@ -139,3 +139,17 @@ std::string StrJoin(const std::vector<std::string>& elements, const std::string&
 
 	return result;
 }
+void StrSplit(const std::string& str, const std::string& delimiters,
+	std::function<void(const std::string&)> callback) {
+	size_t start = 0;
+	size_t end = 0;
+	while ((end = str.find_first_of(delimiters, start)) != std::string::npos) {
+		if (end != start) {  // ºöÂÔ¿Õ×Ö·û´®
+			callback(str.substr(start, end - start));
+		}
+		start = end + 1;
+	}
+	if (start < str.length()) {
+		callback(str.substr(start));
+	}
+}

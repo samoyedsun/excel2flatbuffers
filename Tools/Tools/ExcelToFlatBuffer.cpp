@@ -235,6 +235,28 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
             auto bytesOffset = builder.CreateVector(bytes);
             builder.AddOffset(pField->offset(), bytesOffset);
         }
+        else if (elementType == reflection::Int) {
+            std::vector<int32_t> tokens;
+            StrSplit(value, ",", [&tokens](const std::string& token) {
+                int32_t outVal;
+                if (std::sscanf(token.c_str(), "%d", &outVal) == 1) {
+                    tokens.emplace_back(outVal);
+                }
+                });
+            auto bytesOffset = builder.CreateVector(tokens);
+            builder.AddOffset(pField->offset(), bytesOffset);
+        }
+        else if (elementType == reflection::UInt) {
+            std::vector<uint32_t> tokens;
+            StrSplit(value, ",", [&tokens](const std::string& token) {
+                uint32_t outVal;
+                if (std::sscanf(token.c_str(), "%u", &outVal) == 1) {
+                    tokens.emplace_back(outVal);
+                }
+                });
+            auto bytesOffset = builder.CreateVector(tokens);
+            builder.AddOffset(pField->offset(), bytesOffset);
+        }
     }
     break;
     default:

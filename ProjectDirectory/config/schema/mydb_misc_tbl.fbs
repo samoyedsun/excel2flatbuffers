@@ -1,7 +1,9 @@
 table MydbMiscInfo {
     id:uint32 = 0;      // 默认值为 0
     type:uint32 = 0;    // 默认值为 0
-    data:uint32 = 0;
+    num:uint32 = 0;
+	num_list:[uint32];
+	str:string;
 }
 
 table MydbMiscType1Data {

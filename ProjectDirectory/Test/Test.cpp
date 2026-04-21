@@ -41,8 +41,15 @@ int main()
 		if (pInfo) {
 			std::cout << "id:" << pInfo->id()
 				<< ",type:" << pInfo->type()
-				<< ",data:" << pInfo->data()
+				<< ",num:" << pInfo->num()
+				<< ",size:" << pInfo->num_list()->size()
+				<< ",str:" << pInfo->str()->str()
 				<< std::endl;
+			if (pInfo->num_list()) {
+				for (const auto num : *(pInfo->num_list())) {
+					std::cout << "num:" << num << std::endl;
+				}
+			}
 		}
 		else {
 			std::cout << "Ê²Ã´Çé¿ö£º" << i << std::endl;

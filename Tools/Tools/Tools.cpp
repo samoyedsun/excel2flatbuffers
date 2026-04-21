@@ -124,6 +124,5 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     std::cout << "×ª»»³É¹¦!" << std::endl;
-    system("pause");
     return 0;
 }

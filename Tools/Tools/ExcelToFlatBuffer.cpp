@@ -1,4 +1,5 @@
 #include "ExcelToFlatBuffer.h"
+#include <sstream>
 
 ExcelToFlatBuffer::ExcelToFlatBuffer() {
     m_pSchema = nullptr;
@@ -30,12 +31,8 @@ bool ExcelToFlatBuffer::Convert(
     if (!LoadMetadata(metadataPath)) {
         return false;
     }
-    // 加载 Excel 文件
-    if (!LoadExcel(excelPath)) {
-        return false;
-    }
-    // 构建输出
-    if (!BuildOutput(outputPath)) {
+    // 解析 Excel
+    if (!ParseExcel(excelPath, outputPath)) {
         return false;
     }
     return true;
@@ -84,32 +81,6 @@ bool ExcelToFlatBuffer::LoadMetadata(const std::string& metadataPath) {
     }
     catch (const std::exception& e) {
         m_lastError = "加载元数据失败: " + std::string(e.what());
-        std::cerr << "错误: " << m_lastError << std::endl;
-        return false;
-    }
-}
-
-bool ExcelToFlatBuffer::LoadExcel(const std::string& excelPath) {
-    try {
-        // 转换路径编码（支持中文路径）
-        std::string utf8Path = GB2312ToUTF8(excelPath.c_str());
-        m_workbook.load(utf8Path);
-
-        std::cout << "=== Excel 信息 ===" << std::endl;
-
-        m_sheets.clear();
-        int sheetCount = m_workbook.sheet_count();
-        std::cout << "总共有 " << sheetCount << " 个工作表" << std::endl;
-
-        for (int i = 0; i < sheetCount; ++i) {
-            xlnt::worksheet ws = m_workbook.sheet_by_index(i);
-            m_sheets.emplace(ws.title(), ws);
-        }
-
-        return true;
-    }
-    catch (const std::exception& e) {
-        m_lastError = "加载 Excel 失败: " + std::string(e.what());
         std::cerr << "错误: " << m_lastError << std::endl;
         return false;
     }
@@ -271,23 +242,20 @@ void ExcelToFlatBuffer::ReadExcelLine(size_t maxColumn, std::function<void(int32
     }
 }
 
-void ExcelToFlatBuffer::ReadExcelSheet(xlnt::worksheet& ws,
+void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
     flatbuffers::FlatBufferBuilder& builder,
     InfoOffsetsType& infoOffsets,
     const reflection::Object* pObject,
     nlohmann::json& infoMetadataObj) {
-    auto dim = ws.calculate_dimension();
-    size_t maxRow = dim.height();
-    size_t maxColumn = dim.width();
-    std::cout << "sheet:" << ws.title() << "\t行数：" << maxRow << "\t列数：" << maxColumn << std::endl;
-
+    size_t maxRow = ws.rowCount();
+    size_t maxColumn = ws.columnCount();
     std::vector<std::string> keys;
 
     // 读取第一行（表头）
     int32_t rowIndex = 1;
     ReadExcelLine(maxColumn, [rowIndex, &ws, &keys](int32_t colIndex) {
-        xlnt::cell cell = ws.cell(colIndex, rowIndex);
-        keys.emplace_back(cell.to_string());
+        auto cell = ws.cell(rowIndex, colIndex);
+        keys.emplace_back(cell.getString());
         });
 
     // 读取数据行
@@ -295,9 +263,9 @@ void ExcelToFlatBuffer::ReadExcelSheet(xlnt::worksheet& ws,
         auto tableStart = builder.StartTable();
 
         ReadExcelLine(maxColumn, [this, rowIndex, &ws, &keys, &builder, pObject, &infoMetadataObj](int32_t colIndex) {
-            xlnt::cell cell = ws.cell(colIndex, rowIndex);
+            auto cell = ws.cell(rowIndex, colIndex);
             auto& key = keys[colIndex - 1];
-            if (!cell.has_value()) {
+            if (cell.empty()) {
                 return;
             }
             if (!infoMetadataObj.contains(key)) {
@@ -312,7 +280,7 @@ void ExcelToFlatBuffer::ReadExcelSheet(xlnt::worksheet& ws,
                 std::cerr << "错误: 找不到字段 " << key << " 定义" << std::endl;
                 return;
             }
-            std::string value = UTF8ToGB2312(cell.to_string().c_str());
+            std::string value = UTF8ToGB2312(cell.getString().c_str());
             ParseField(builder, pField, key, StrTrim(value));
             });
 
@@ -321,8 +289,23 @@ void ExcelToFlatBuffer::ReadExcelSheet(xlnt::worksheet& ws,
     }
 }
 
-bool ExcelToFlatBuffer::BuildOutput(const std::string& outputPath) {
+bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::string& outputPath) {
     try {
+        // 转换路径编码（支持中文路径）
+        std::string utf8Path = GB2312ToUTF8(excelPath.c_str());
+        OpenXLSX::XLDocument doc(utf8Path);;
+        std::cout << "=== Excel 信息 ===" << std::endl;
+        std::map<std::string, OpenXLSX::XLWorksheet> sheets;
+        auto workbook = doc.workbook();
+        int sheetCount = workbook.sheetCount();
+        std::cout << "总共有 " << sheetCount << " 个工作表" << std::endl;
+        std::vector<std::string> sheetNames = workbook.sheetNames();
+        for (const auto& sheeName : sheetNames) {
+            auto ws = workbook.worksheet(sheeName);
+            sheets.emplace(sheeName, ws);
+        }
+
+        //============================================================
         flatbuffers::FlatBufferBuilder builder(1024);
         m_tblOffsets.clear();
 
@@ -360,7 +343,7 @@ bool ExcelToFlatBuffer::BuildOutput(const std::string& outputPath) {
                         os << " typeName:" << pObject->name()->str();
 
                         // 检查工作表是否存在
-                        if (m_sheets.find(pField->name()->str()) == m_sheets.end()) {
+                        if (sheets.find(pField->name()->str()) == sheets.end()) {
                             std::cerr << "错误: 未找到对应的数据表 "
                                 << m_excelFileName << ":" << pField->name()->str() << std::endl;
                             continue;
@@ -375,8 +358,10 @@ bool ExcelToFlatBuffer::BuildOutput(const std::string& outputPath) {
 
                         auto infoMetadata = tblMetadata[pObject->name()->str()];
                         InfoOffsetsType infoOffsets;
-                        xlnt::worksheet ws = m_sheets[pField->name()->str()];
-
+                        OpenXLSX::XLWorksheet ws = sheets[pField->name()->str()];
+                        size_t maxRow = ws.rowCount();
+                        size_t maxColumn = ws.columnCount();
+                        std::cout << "sheet:" << pField->name()->str() << "\t行数：" << maxRow << "\t列数：" << maxColumn << std::endl;
                         ReadExcelSheet(ws, builder, infoOffsets, pObject, infoMetadata);
                         m_tblOffsets.emplace(pField->name()->str(), infoOffsets);
                     }

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <functional>
+#include <string>
 
 char* UTF8ToGB2312(const char* utf8);
 char* GB2312ToUTF8(const char* gb2312);

@@ -1,5 +1,6 @@
 #include "./ExcelToFlatBuffer.h"
 #include <chrono>
+#include <sstream>
 #include <winsock2.h>
 #include <iphlpapi.h>
 

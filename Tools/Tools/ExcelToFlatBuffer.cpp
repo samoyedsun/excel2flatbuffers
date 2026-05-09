@@ -265,7 +265,8 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
         ReadExcelLine(maxColumn, [this, rowIndex, &ws, &keys, &builder, pObject, &infoMetadataObj](int32_t colIndex) {
             auto cell = ws.cell(rowIndex, colIndex);
             auto& key = keys[colIndex - 1];
-            if (cell.empty()) {
+            auto& val = cell.value();
+            if (val.type() == OpenXLSX::XLValueType::Empty) {
                 return;
             }
             if (!infoMetadataObj.contains(key)) {

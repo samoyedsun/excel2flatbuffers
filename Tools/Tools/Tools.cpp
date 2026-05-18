@@ -3,6 +3,7 @@
 #include <sstream>
 #include <winsock2.h>
 #include <iphlpapi.h>
+#include "Utils.h"
 
 #pragma comment(lib, "iphlpapi.lib")
 
@@ -106,24 +107,24 @@ std::string GetCurrentTimeString() {
 
 int main(int argc, char* argv[]) {
     if (argc != 5) {
-        std::cerr << "用法: " << argv[0] << " <schema.bfbs> <excel.xlsx> <output.bin>" << std::endl;
+        STDERR << "用法: " << argv[0] << " <schema.bfbs> <excel.xlsx> <output.bin>" << STDEND;
         return 1;
     }
     std::string metadataFile = argv[1];
     std::string bfbsFile = argv[2];
     std::string excelFile = argv[3];
     std::string outputFile = argv[4];
-    std::cout << "metadataFile: " << metadataFile << std::endl;
-    std::cout << "bfbsFile: " << bfbsFile << std::endl;
-    std::cout << "excelFile: " << excelFile << std::endl;
-    std::cout << "outputFile: " << outputFile << std::endl;
+    STDOUT << "metadataFile: " << metadataFile << STDEND;
+    STDOUT << "bfbsFile: " << bfbsFile << STDEND;
+    STDOUT << "excelFile: " << excelFile << STDEND;
+    STDOUT << "outputFile: " << outputFile << STDEND;
     ExcelToFlatBuffer converter;
     converter.SetSymbol(GetCurrentTimeString(), GetHostInfo(), GetLocalAddress());
     if (!converter.Convert(metadataFile, bfbsFile, excelFile, outputFile)) {
-        std::cerr << "转换失败: " << converter.GetLastError() << std::endl;
+        STDERR << "转换失败: " << converter.GetLastError() << STDEND;
         system("pause");
         return 1;
     }
-    std::cout << "转换成功!" << std::endl;
+    STDOUT << "转换成功!" << STDEND;
     return 0;
 }

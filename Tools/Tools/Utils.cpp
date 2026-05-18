@@ -61,7 +61,7 @@ std::string WcharToChar(const std::wstring& wstr) {
 	const wchar_t* wccstr = wstr.c_str();
 	int len = WideCharToMultiByte(CP_UTF8, 0, wccstr, -1, nullptr, 0, nullptr, nullptr);
 	if (len == 0) {
-		std::cerr << "WideCharToMultiByte failed" << std::endl;
+		STDERR << "WideCharToMultiByte failed" << STDEND;
 		return "";
 	}
 
@@ -103,7 +103,7 @@ std::vector<uint8_t> LoadFile(const std::string& filename) {
 	file.read(reinterpret_cast<char*>(buffer.data()), size);
 	file.close();
 
-	std::cout << "加载文件: " << filename << " (" << size << " 字节)" << std::endl;
+	STDOUT << "加载文件: " << filename << " (" << size << " 字节)" << STDEND;
 	return buffer;
 }
 
@@ -115,7 +115,7 @@ void WriteFile(const std::string& filename, std::vector<uint8_t>& data) {
 	}
 	file.write(reinterpret_cast<const char*>(data.data()), data.size());
 	file.close();
-	std::cout << "写入文件: " << filename << " (" << data.size() << " 字节)" << std::endl;
+	STDOUT << "写入文件: " << filename << " (" << data.size() << " 字节)" << STDEND;
 }
 std::string StrTrim(const std::string& str) {
 	size_t start = str.find_first_not_of(" \t\n\r");

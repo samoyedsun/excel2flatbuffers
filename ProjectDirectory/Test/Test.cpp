@@ -6,6 +6,10 @@
 #include <fstream>
 #include <vector>
 
+#define STDOUT std::cout << "\033[32m"
+#define STDERR std::cerr << "\033[31m"
+#define STDEND "\033[0m" << std::endl
+
 std::vector<uint8_t> LoadFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::binary | std::ios::ate);
 	if (!file.is_open()) {
@@ -19,7 +23,7 @@ std::vector<uint8_t> LoadFile(const std::string& filename) {
 	file.read(reinterpret_cast<char*>(buffer.data()), size);
 	file.close();
 
-	std::cout << "加载文件: " << filename << " (" << size << " 字节)" << std::endl;
+	STDOUT << "加载文件: " << filename << " (" << size << " 字节)" << STDEND;
 	return buffer;
 }
 
@@ -30,86 +34,86 @@ int main()
 	// 2. 验证 FlatBuffers 数据完整性（可选但推荐）
 	flatbuffers::Verifier verifier(buffer.data(), buffer.size());
 	if (!VerifyMydbMiscTblBuffer(verifier)) {
-		std::cerr << "FlatBuffers 数据验证失败" << std::endl;
+		STDERR << "FlatBuffers 数据验证失败" << STDEND;
 		return 1;
 	}
 
 	auto pTbl = GetMydbMiscTbl(buffer.data());
-	std::cout << "misc_infos条数：" << pTbl->misc_infos()->size() << std::endl;
+	STDOUT << "misc_infos条数：" << pTbl->misc_infos()->size() << STDEND;
 	for (size_t i = 0; i < pTbl->misc_infos()->size(); ++i) {
 		auto pInfo = pTbl->misc_infos()->Get(i);
 		if (pInfo) {
-			std::cout << "id:" << pInfo->id()
+			STDOUT << "id:" << pInfo->id()
 				<< ",type:" << pInfo->type()
 				<< ",num:" << pInfo->num()
 				<< ",size:" << pInfo->num_list()->size()
 				<< ",str:" << pInfo->str()->str()
-				<< std::endl;
+				<< STDEND;
 			if (pInfo->num_list()) {
 				for (const auto num : *(pInfo->num_list())) {
-					std::cout << "num:" << num << std::endl;
+					STDOUT << "num:" << num << STDEND;
 				}
 			}
 		}
 		else {
-			std::cout << "什么情况：" << i << std::endl;
+			STDOUT << "什么情况：" << i << STDEND;
 		}
 	}
-	std::cout << "type1_datas条数：" << pTbl->type1_datas()->size() << std::endl;
+	STDOUT << "type1_datas条数：" << pTbl->type1_datas()->size() << STDEND;
 	for (size_t i = 0; i < pTbl->type1_datas()->size(); ++i) {
 		auto pInfo = pTbl->type1_datas()->Get(i);
 		if (pInfo) {
-			std::cout << "id:" << pInfo->id()
+			STDOUT << "id:" << pInfo->id()
 				<< ",field:" << pInfo->field()->str()
-				<< std::endl;
+				<< STDEND;
 		}
 		else {
-			std::cout << "什么情况：" << i << std::endl;
+			STDOUT << "什么情况：" << i << STDEND;
 		}
 	}
-	std::cout << "type2_datas条数：" << pTbl->type2_datas()->size() << std::endl;
+	STDOUT << "type2_datas条数：" << pTbl->type2_datas()->size() << STDEND;
 	for (size_t i = 0; i < pTbl->type2_datas()->size(); ++i) {
 		auto pInfo = pTbl->type2_datas()->Get(i);
 		if (pInfo) {
-			std::cout << "id:" << pInfo->id()
+			STDOUT << "id:" << pInfo->id()
 				<< ",field:" << pInfo->field()
-				<< std::endl;
+				<< STDEND;
 		}
 		else {
-			std::cout << "什么情况：" << i << std::endl;
+			STDOUT << "什么情况：" << i << STDEND;
 		}
 	}
-	std::cout << "type3_datas条数：" << pTbl->type3_datas()->size() << std::endl;
+	STDOUT << "type3_datas条数：" << pTbl->type3_datas()->size() << STDEND;
 	for (size_t i = 0; i < pTbl->type3_datas()->size(); ++i) {
 		auto pInfo = pTbl->type3_datas()->Get(i);
 		if (pInfo) {
-			std::cout << "id:" << pInfo->id()
+			STDOUT << "id:" << pInfo->id()
 				<< ",field1:" << pInfo->field1()
 				<< ",field2:" << pInfo->field2()
-				<< std::endl;
+				<< STDEND;
 		}
 		else {
-			std::cout << "什么情况：" << i << std::endl;
+			STDOUT << "什么情况：" << i << STDEND;
 		}
 	}
-	std::cout << "type4_datas条数：" << pTbl->type4_datas()->size() << std::endl;
+	STDOUT << "type4_datas条数：" << pTbl->type4_datas()->size() << STDEND;
 	for (size_t i = 0; i < pTbl->type4_datas()->size(); ++i) {
 		auto pInfo = pTbl->type4_datas()->Get(i);
 		if (pInfo) {
-			std::cout << "id:" << pInfo->id()
+			STDOUT << "id:" << pInfo->id()
 				<< ",field1:" << pInfo->field1()
 				<< ",field2:" << pInfo->field2()
 				<< ",field3:" << pInfo->field3()
 				<< ",field4:" << pInfo->field4()
-				<< std::endl;
+				<< STDEND;
 		}
 		else {
-			std::cout << "什么情况：" << i << std::endl;
+			STDOUT << "什么情况：" << i << STDEND;
 		}
 	}
-	std::cout << "导表时间：" << pTbl->__date_time()->str() << std::endl;
-	std::cout << "导表主机：" << pTbl->__host_info()->str() << std::endl;
-	std::cout << "导表地址：" << pTbl->__mac_address()->str() << std::endl;
+	STDOUT << "导表时间：" << pTbl->__date_time()->str() << STDEND;
+	STDOUT << "导表主机：" << pTbl->__host_info()->str() << STDEND;
+	STDOUT << "导表地址：" << pTbl->__mac_address()->str() << STDEND;
 	system("pause");
 }
 

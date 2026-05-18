@@ -11,9 +11,9 @@ void ExcelToFlatBuffer::SetSymbol(const std::string& dataTime
     m_dateTime = dataTime;
     m_hostInfo = hostInfo;
     m_macAddress = macAddress;
-    std::cout << "时间：" << m_dateTime << std::endl;
-    std::cout << "主机：" << m_hostInfo << std::endl;
-    std::cout << "地址：" << m_macAddress << std::endl;
+    STDOUT << "时间：" << m_dateTime << STDEND;
+    STDOUT << "主机：" << m_hostInfo << STDEND;
+    STDOUT << "地址：" << m_macAddress << STDEND;
 }
 
 bool ExcelToFlatBuffer::Convert(
@@ -45,21 +45,21 @@ bool ExcelToFlatBuffer::LoadSchema(const std::string& bfbsPath) {
         flatbuffers::Verifier schemaVerifier(m_schemaData.data(), m_schemaData.size());
         if (!reflection::VerifySchemaBuffer(schemaVerifier)) {
             m_lastError = ".bfbs 文件无效: " + bfbsPath;
-            std::cerr << "错误: " << m_lastError << std::endl;
+            STDERR << "错误: " << m_lastError << STDEND;
             return false;
         }
 
         m_pSchema = reflection::GetSchema(m_schemaData.data());
 
-        std::cout << "=== Schema 信息 ===" << std::endl;
-        std::cout << "根表: " << m_pSchema->root_table()->name()->str() << std::endl;
-        std::cout << "对象数量: " << m_pSchema->objects()->size() << std::endl;
+        STDOUT << "=== Schema 信息 ===" << STDEND;
+        STDOUT << "根表: " << m_pSchema->root_table()->name()->str() << STDEND;
+        STDOUT << "对象数量: " << m_pSchema->objects()->size() << STDEND;
 
         return true;
     }
     catch (const std::exception& e) {
         m_lastError = "加载 Schema 失败: " + std::string(e.what());
-        std::cerr << "错误: " << m_lastError << std::endl;
+        STDERR << "错误: " << m_lastError << STDEND;
         return false;
     }
 }
@@ -71,7 +71,7 @@ bool ExcelToFlatBuffer::LoadMetadata(const std::string& metadataPath) {
 
         if (jsonStr.empty()) {
             m_lastError = "元数据文件为空: " + metadataPath;
-            std::cerr << "错误: " << m_lastError << std::endl;
+            STDERR << "错误: " << m_lastError << STDEND;
             return false;
         }
 
@@ -81,7 +81,7 @@ bool ExcelToFlatBuffer::LoadMetadata(const std::string& metadataPath) {
     }
     catch (const std::exception& e) {
         m_lastError = "加载元数据失败: " + std::string(e.what());
-        std::cerr << "错误: " << m_lastError << std::endl;
+        STDERR << "错误: " << m_lastError << STDEND;
         return false;
     }
 }
@@ -104,7 +104,7 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         if (endptr != value.c_str() && val >= INT8_MIN && val <= INT8_MAX)
             builder.AddElement<int8_t>(pField->offset(), static_cast<int8_t>(val), pField->default_integer());
         else
-            std::cerr << "Failed to convert '" << value << "' to int8 for field " << pField->name()->str() << std::endl;
+            STDERR << "Failed to convert '" << value << "' to int8 for field " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::UByte:
@@ -114,7 +114,7 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         if (endptr != value.c_str() && val <= UINT8_MAX)
             builder.AddElement<uint8_t>(pField->offset(), static_cast<uint8_t>(val), pField->default_integer());
         else
-            std::cerr << "Failed to convert '" << value << "' to uint8 for field " << pField->name()->str() << std::endl;
+            STDERR << "Failed to convert '" << value << "' to uint8 for field " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::Short:
@@ -124,7 +124,7 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         if (endptr != value.c_str() && val >= INT16_MIN && val <= INT16_MAX)
             builder.AddElement<int16_t>(pField->offset(), static_cast<int16_t>(val), pField->default_integer());
         else
-            std::cerr << "Failed to convert '" << value << "' to int16 for field " << pField->name()->str() << std::endl;
+            STDERR << "Failed to convert '" << value << "' to int16 for field " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::UShort:
@@ -134,7 +134,7 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         if (endptr != value.c_str() && val <= UINT16_MAX)
             builder.AddElement<uint16_t>(pField->offset(), static_cast<uint16_t>(val), pField->default_integer());
         else
-            std::cerr << "Failed to convert '" << value << "' to uint16 for field " << pField->name()->str() << std::endl;
+            STDERR << "Failed to convert '" << value << "' to uint16 for field " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::Int:
@@ -144,7 +144,7 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         if (endptr != value.c_str() && val >= INT32_MIN && val <= INT32_MAX)
             builder.AddElement<int32_t>(pField->offset(), static_cast<int32_t>(val), pField->default_integer());
         else
-            std::cerr << "Failed to convert '" << value << "' to int32 for field " << pField->name()->str() << std::endl;
+            STDERR << "Failed to convert '" << value << "' to int32 for field " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::UInt:
@@ -154,7 +154,7 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         if (endptr != value.c_str() && val <= UINT32_MAX)
             builder.AddElement<uint32_t>(pField->offset(), static_cast<uint32_t>(val), pField->default_integer());
         else
-            std::cerr << "Failed to convert '" << value << "' to uint32 for field " << pField->name()->str() << std::endl;
+            STDERR << "Failed to convert '" << value << "' to uint32 for field " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::Long:
@@ -164,7 +164,7 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         if (endptr != value.c_str())
             builder.AddElement<int64_t>(pField->offset(), static_cast<int64_t>(val), pField->default_integer());
         else
-            std::cerr << "Failed to convert '" << value << "' to int64 for field " << pField->name()->str() << std::endl;
+            STDERR << "Failed to convert '" << value << "' to int64 for field " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::ULong:
@@ -174,7 +174,7 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         if (endptr != value.c_str())
             builder.AddElement<uint64_t>(pField->offset(), static_cast<uint64_t>(val), pField->default_integer());
         else
-            std::cerr << "Failed to convert '" << value << "' to uint64 for field " << pField->name()->str() << std::endl;
+            STDERR << "Failed to convert '" << value << "' to uint64 for field " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::Float:
@@ -184,7 +184,7 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         if (endptr != value.c_str())
             builder.AddElement<float>(pField->offset(), val, pField->default_integer());
         else
-            std::cerr << "Failed to convert '" << value << "' to float for field " << pField->name()->str() << std::endl;
+            STDERR << "Failed to convert '" << value << "' to float for field " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::Double:
@@ -194,12 +194,12 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         if (endptr != value.c_str())
             builder.AddElement<double>(pField->offset(), val, pField->default_integer());
         else
-            std::cerr << "Failed to convert '" << value << "' to double for field " << pField->name()->str() << std::endl;
+            STDERR << "Failed to convert '" << value << "' to double for field " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::Array:
     {
-        std::cerr << "Error: array type is not supported yet: " << pField->name()->str() << std::endl;
+        STDERR << "Error: array type is not supported yet: " << pField->name()->str() << STDEND;
     }
     break;
     case reflection::String:
@@ -289,14 +289,14 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
             builder.AddOffset(pField->offset(), bytesOffset);
         }
         else {
-            std::cerr << "Unsupported vector element type: " << elementType
-                << " for field " << pField->name()->str() << std::endl;
+            STDERR << "Unsupported vector element type: " << elementType
+                << " for field " << pField->name()->str() << STDEND;
         }
     }
     break;
     default:
-        std::cerr << "Unsupported field type: " << pField->type()->base_type()
-            << " for field " << pField->name()->str() << std::endl;
+        STDERR << "Unsupported field type: " << pField->type()->base_type()
+            << " for field " << pField->name()->str() << STDEND;
     }
 }
 
@@ -334,15 +334,15 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
                 return;
             }
             if (!infoMetadataObj.contains(key)) {
-                //std::cerr << "错误: 未找到对应字段的元数据 " << ws.title()
-                //    << ":" << std::string(UTF8ToGB2312(key.c_str())) << std::endl;
+                //STDERR << "错误: 未找到对应字段的元数据 " << ws.title()
+                //    << ":" << std::string(UTF8ToGB2312(key.c_str())) << STDEND;
                 // 元数据未配 说明不需要导出
                 return;
             }
             auto jsonValue = infoMetadataObj.at(key);
             auto pField = pObject->fields()->LookupByKey(jsonValue);
             if (!pField) {
-                std::cerr << "错误: 找不到字段 " << key << " 定义" << std::endl;
+                STDERR << "错误: 找不到字段 " << key << " 定义" << STDEND;
                 return;
             }
             std::string value = UTF8ToGB2312(cell.getString().c_str());
@@ -359,11 +359,11 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
         // 转换路径编码（支持中文路径）
         std::string utf8Path = GB2312ToUTF8(excelPath.c_str());
         OpenXLSX::XLDocument doc(utf8Path);;
-        std::cout << "=== Excel 信息 ===" << std::endl;
+        STDOUT << "=== Excel 信息 ===" << STDEND;
         std::map<std::string, OpenXLSX::XLWorksheet> sheets;
         auto workbook = doc.workbook();
         int sheetCount = workbook.sheetCount();
-        std::cout << "总共有 " << sheetCount << " 个工作表" << std::endl;
+        STDOUT << "总共有 " << sheetCount << " 个工作表" << STDEND;
         std::vector<std::string> sheetNames = workbook.sheetNames();
         for (const auto& sheeName : sheetNames) {
             auto ws = workbook.worksheet(sheeName);
@@ -383,7 +383,7 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
         // 检查元数据中是否有当前 Excel 文件的配置
         if (!m_metadataRoot.contains(m_excelFileName)) {
             m_lastError = "未找到对应的元数据: " + m_excelFileName;
-            std::cerr << "错误: " << m_lastError << std::endl;
+            STDERR << "错误: " << m_lastError << STDEND;
             return false;
         }
 
@@ -409,15 +409,15 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
 
                         // 检查工作表是否存在
                         if (sheets.find(pField->name()->str()) == sheets.end()) {
-                            std::cerr << "错误: 未找到对应的数据表 "
-                                << m_excelFileName << ":" << pField->name()->str() << std::endl;
+                            STDERR << "错误: 未找到对应的数据表 "
+                                << m_excelFileName << ":" << pField->name()->str() << STDEND;
                             continue;
                         }
 
                         // 检查元数据是否存在
                         if (!tblMetadata.contains(pObject->name()->str())) {
-                            std::cerr << "错误: 未找到对应表字段的元数据 "
-                                << m_excelFileName << ":" << pObject->name()->str() << std::endl;
+                            STDERR << "错误: 未找到对应表字段的元数据 "
+                                << m_excelFileName << ":" << pObject->name()->str() << STDEND;
                             continue;
                         }
 
@@ -426,12 +426,12 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
                         OpenXLSX::XLWorksheet ws = sheets[pField->name()->str()];
                         size_t maxRow = ws.rowCount();
                         size_t maxColumn = ws.columnCount();
-                        std::cout << "sheet:" << pField->name()->str() << "\t行数：" << maxRow << "\t列数：" << maxColumn << std::endl;
+                        STDOUT << "sheet:" << pField->name()->str() << "\t行数：" << maxRow << "\t列数：" << maxColumn << STDEND;
                         ReadExcelSheet(ws, builder, infoOffsets, pObject, infoMetadata);
                         m_tblOffsets.emplace(pField->name()->str(), infoOffsets);
                     }
                 }
-                std::cout << os.str() << std::endl;
+                STDOUT << os.str() << STDEND;
             }
         }
 
@@ -476,7 +476,7 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
             m_outputData.assign(builder.GetBufferPointer(),
                 builder.GetBufferPointer() + builder.GetSize());
 
-            std::cout << "输出数据大小: " << m_outputData.size() << " 字节" << std::endl;
+            STDOUT << "输出数据大小: " << m_outputData.size() << " 字节" << STDEND;
             WriteFile(outputPath, m_outputData);
 
             return true;
@@ -488,7 +488,7 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
     }
     catch (const std::exception& e) {
         m_lastError = "构建输出失败: " + std::string(e.what());
-        std::cerr << "错误: " << m_lastError << std::endl;
+        STDERR << "错误: " << m_lastError << STDEND;
         return false;
     }
 }

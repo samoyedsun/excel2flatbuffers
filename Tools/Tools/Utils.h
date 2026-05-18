@@ -5,6 +5,10 @@
 #include <functional>
 #include <string>
 
+#define STDOUT std::cout << "\033[32m"
+#define STDERR std::cerr << "\033[31m"
+#define STDEND "\033[0m" << std::endl
+
 char* UTF8ToGB2312(const char* utf8);
 char* GB2312ToUTF8(const char* gb2312);
 std::string WcharToChar(const std::wstring& wstr);

@@ -99,91 +99,100 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
     break;
     case reflection::Byte:
     {
-        int8_t outVal;
-        if (sscanf(value.c_str(), "%hhd", &outVal) == 1)
-            builder.AddElement<int8_t>(pField->offset(), outVal, pField->default_integer());
+        char* endptr = nullptr;
+        long val = std::strtol(value.c_str(), &endptr, 10);
+        if (endptr != value.c_str() && val >= INT8_MIN && val <= INT8_MAX)
+            builder.AddElement<int8_t>(pField->offset(), static_cast<int8_t>(val), pField->default_integer());
         else
             std::cerr << "Failed to convert '" << value << "' to int8 for field " << pField->name()->str() << std::endl;
     }
     break;
     case reflection::UByte:
     {
-        uint8_t outVal;
-        if (sscanf(value.c_str(), "%hhu", &outVal) == 1)
-            builder.AddElement<uint8_t>(pField->offset(), outVal, pField->default_integer());
+        char* endptr = nullptr;
+        unsigned long val = std::strtoul(value.c_str(), &endptr, 10);
+        if (endptr != value.c_str() && val <= UINT8_MAX)
+            builder.AddElement<uint8_t>(pField->offset(), static_cast<uint8_t>(val), pField->default_integer());
         else
             std::cerr << "Failed to convert '" << value << "' to uint8 for field " << pField->name()->str() << std::endl;
     }
     break;
     case reflection::Short:
     {
-        int16_t outVal;
-        if (sscanf(value.c_str(), "%hd", &outVal) == 1)
-            builder.AddElement<int16_t>(pField->offset(), outVal, pField->default_integer());
+        char* endptr = nullptr;
+        long val = std::strtol(value.c_str(), &endptr, 10);
+        if (endptr != value.c_str() && val >= INT16_MIN && val <= INT16_MAX)
+            builder.AddElement<int16_t>(pField->offset(), static_cast<int16_t>(val), pField->default_integer());
         else
             std::cerr << "Failed to convert '" << value << "' to int16 for field " << pField->name()->str() << std::endl;
     }
     break;
     case reflection::UShort:
     {
-        uint16_t outVal;
-        if (sscanf(value.c_str(), "%hu", &outVal) == 1)
-            builder.AddElement<uint16_t>(pField->offset(), outVal, pField->default_integer());
+        char* endptr = nullptr;
+        unsigned long val = std::strtoul(value.c_str(), &endptr, 10);
+        if (endptr != value.c_str() && val <= UINT16_MAX)
+            builder.AddElement<uint16_t>(pField->offset(), static_cast<uint16_t>(val), pField->default_integer());
         else
             std::cerr << "Failed to convert '" << value << "' to uint16 for field " << pField->name()->str() << std::endl;
     }
     break;
     case reflection::Int:
     {
-        int32_t outVal;
-        if (std::sscanf(value.c_str(), "%d", &outVal) == 1)
-            builder.AddElement<int32_t>(pField->offset(), outVal, pField->default_integer());
+        char* endptr = nullptr;
+        long val = std::strtol(value.c_str(), &endptr, 10);
+        if (endptr != value.c_str() && val >= INT32_MIN && val <= INT32_MAX)
+            builder.AddElement<int32_t>(pField->offset(), static_cast<int32_t>(val), pField->default_integer());
         else
             std::cerr << "Failed to convert '" << value << "' to int32 for field " << pField->name()->str() << std::endl;
     }
     break;
     case reflection::UInt:
     {
-        uint32_t outVal;
-        if (std::sscanf(value.c_str(), "%u", &outVal) == 1) {
-            builder.AddElement<uint32_t>(pField->offset(), outVal, pField->default_integer());
-        }
+        char* endptr = nullptr;
+        unsigned long val = std::strtoul(value.c_str(), &endptr, 10);
+        if (endptr != value.c_str() && val <= UINT32_MAX)
+            builder.AddElement<uint32_t>(pField->offset(), static_cast<uint32_t>(val), pField->default_integer());
         else
             std::cerr << "Failed to convert '" << value << "' to uint32 for field " << pField->name()->str() << std::endl;
     }
     break;
     case reflection::Long:
     {
-        int64_t outVal;
-        if (std::sscanf(value.c_str(), "%lld", &outVal) == 1)
-            builder.AddElement<int64_t>(pField->offset(), outVal, pField->default_integer());
+        char* endptr = nullptr;
+        long long val = std::strtoll(value.c_str(), &endptr, 10);
+        if (endptr != value.c_str())
+            builder.AddElement<int64_t>(pField->offset(), static_cast<int64_t>(val), pField->default_integer());
         else
             std::cerr << "Failed to convert '" << value << "' to int64 for field " << pField->name()->str() << std::endl;
     }
     break;
     case reflection::ULong:
     {
-        uint64_t outVal;
-        if (std::sscanf(value.c_str(), "%llu", &outVal) == 1)
-            builder.AddElement<uint64_t>(pField->offset(), outVal, pField->default_integer());
+        char* endptr = nullptr;
+        unsigned long long val = std::strtoull(value.c_str(), &endptr, 10);
+        if (endptr != value.c_str())
+            builder.AddElement<uint64_t>(pField->offset(), static_cast<uint64_t>(val), pField->default_integer());
         else
             std::cerr << "Failed to convert '" << value << "' to uint64 for field " << pField->name()->str() << std::endl;
     }
     break;
     case reflection::Float:
     {
-        float outVal;
-        if (std::sscanf(value.c_str(), "%f", &outVal) == 1)
-            builder.AddElement<float>(pField->offset(), outVal, pField->default_integer());
+        char* endptr = nullptr;
+        float val = std::strtof(value.c_str(), &endptr);
+        if (endptr != value.c_str())
+            builder.AddElement<float>(pField->offset(), val, pField->default_integer());
         else
             std::cerr << "Failed to convert '" << value << "' to float for field " << pField->name()->str() << std::endl;
     }
     break;
     case reflection::Double:
     {
-        double outVal;
-        if (std::sscanf(value.c_str(), "%lf", &outVal) == 1)
-            builder.AddElement<double>(pField->offset(), outVal, pField->default_integer());
+        char* endptr = nullptr;
+        double val = std::strtod(value.c_str(), &endptr);
+        if (endptr != value.c_str())
+            builder.AddElement<double>(pField->offset(), val, pField->default_integer());
         else
             std::cerr << "Failed to convert '" << value << "' to double for field " << pField->name()->str() << std::endl;
     }
@@ -192,6 +201,7 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
     {
         std::cerr << "Error: array type is not supported yet: " << pField->name()->str() << std::endl;
     }
+    break;
     case reflection::String:
     {
         auto strOffset = builder.CreateString(value);
@@ -209,9 +219,10 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         else if (elementType == reflection::Int) {
             std::vector<int32_t> tokens;
             StrSplit(value, ",", [&tokens](const std::string& token) {
-                int32_t outVal;
-                if (std::sscanf(token.c_str(), "%d", &outVal) == 1) {
-                    tokens.emplace_back(outVal);
+                char* endptr = nullptr;
+                long val = std::strtol(token.c_str(), &endptr, 10);
+                if (endptr != token.c_str() && val >= INT32_MIN && val <= INT32_MAX) {
+                    tokens.emplace_back(static_cast<int32_t>(val));
                 }
                 });
             auto bytesOffset = builder.CreateVector(tokens);
@@ -220,13 +231,66 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
         else if (elementType == reflection::UInt) {
             std::vector<uint32_t> tokens;
             StrSplit(value, ",", [&tokens](const std::string& token) {
-                uint32_t outVal;
-                if (std::sscanf(token.c_str(), "%u", &outVal) == 1) {
-                    tokens.emplace_back(outVal);
+                char* endptr = nullptr;
+                unsigned long val = std::strtoul(token.c_str(), &endptr, 10);
+                if (endptr != token.c_str() && val <= UINT32_MAX) {
+                    tokens.emplace_back(static_cast<uint32_t>(val));
                 }
                 });
             auto bytesOffset = builder.CreateVector(tokens);
             builder.AddOffset(pField->offset(), bytesOffset);
+        }
+        else if (elementType == reflection::Long) {
+            std::vector<int64_t> tokens;
+            StrSplit(value, ",", [&tokens](const std::string& token) {
+                char* endptr = nullptr;
+                long long val = std::strtoll(token.c_str(), &endptr, 10);
+                if (endptr != token.c_str()) {
+                    tokens.emplace_back(static_cast<int64_t>(val));
+                }
+                });
+            auto bytesOffset = builder.CreateVector(tokens);
+            builder.AddOffset(pField->offset(), bytesOffset);
+        }
+        else if (elementType == reflection::ULong) {
+            std::vector<uint64_t> tokens;
+            StrSplit(value, ",", [&tokens](const std::string& token) {
+                char* endptr = nullptr;
+                unsigned long long val = std::strtoull(token.c_str(), &endptr, 10);
+                if (endptr != token.c_str()) {
+                    tokens.emplace_back(static_cast<uint64_t>(val));
+                }
+                });
+            auto bytesOffset = builder.CreateVector(tokens);
+            builder.AddOffset(pField->offset(), bytesOffset);
+        }
+        else if (elementType == reflection::Float) {
+            std::vector<float> tokens;
+            StrSplit(value, ",", [&tokens](const std::string& token) {
+                char* endptr = nullptr;
+                float val = std::strtof(token.c_str(), &endptr);
+                if (endptr != token.c_str()) {
+                    tokens.emplace_back(val);
+                }
+                });
+            auto bytesOffset = builder.CreateVector(tokens);
+            builder.AddOffset(pField->offset(), bytesOffset);
+        }
+        else if (elementType == reflection::Double) {
+            std::vector<double> tokens;
+            StrSplit(value, ",", [&tokens](const std::string& token) {
+                char* endptr = nullptr;
+                double val = std::strtod(token.c_str(), &endptr);
+                if (endptr != token.c_str()) {
+                    tokens.emplace_back(val);
+                }
+                });
+            auto bytesOffset = builder.CreateVector(tokens);
+            builder.AddOffset(pField->offset(), bytesOffset);
+        }
+        else {
+            std::cerr << "Unsupported vector element type: " << elementType
+                << " for field " << pField->name()->str() << std::endl;
         }
     }
     break;

@@ -122,7 +122,6 @@ int main(int argc, char* argv[]) {
     converter.SetSymbol(GetCurrentTimeString(), GetHostInfo(), GetLocalAddress());
     if (!converter.Convert(metadataFile, bfbsFile, excelFile, outputFile)) {
         STDERR << "转换失败: " << converter.GetLastError() << STDEND;
-        system("pause");
         return 1;
     }
     STDOUT << "转换成功!" << STDEND;

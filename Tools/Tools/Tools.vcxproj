@@ -136,6 +136,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SVR_Header_2D)\sdk\OpenXLSX-0.5.0\lib;$(SVR_Header_2D)\sdk\OpenXLSX-0.5.0\lib\OpenXLSX</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenXLSX.lib;pugixml.lib;nowide.lib;miniz.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -1,6 +1,15 @@
 #include "ExcelToFlatBuffer.h"
 #include <sstream>
 
+std::string toLower(const std::string& str) {
+    std::string result;
+    result.reserve(str.size());
+    for (unsigned char c : str) {
+        result += std::tolower(c);
+    }
+    return result;
+}
+
 ExcelToFlatBuffer::ExcelToFlatBuffer() {
     m_pSchema = nullptr;
 }
@@ -367,7 +376,7 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
         std::vector<std::string> sheetNames = workbook.sheetNames();
         for (const auto& sheeName : sheetNames) {
             auto ws = workbook.worksheet(sheeName);
-            sheets.emplace(sheeName, ws);
+            sheets.emplace(toLower(sheeName), ws);
         }
 
         //============================================================

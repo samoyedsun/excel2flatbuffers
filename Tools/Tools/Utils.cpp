@@ -4,57 +4,44 @@
 #include <iostream>
 #include <string>
 
-#define MAX_ENCODING_BUFFER_SIZE 4096
-
-char* UTF8ToGB2312(const char* utf8) {
-	if (!utf8 || *utf8 == '\0') {
-		thread_local char empty[] = "";
-		return empty;
-	}
-
-	thread_local char buffer[MAX_ENCODING_BUFFER_SIZE];
-	thread_local wchar_t wbuffer[MAX_ENCODING_BUFFER_SIZE / 2];
-
-	int wlen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, nullptr, 0);
-	if (wlen == 0 || wlen >= MAX_ENCODING_BUFFER_SIZE / 2) {
-		return nullptr;  // ×Ö·û´®Ì«³¤
-	}
-
-	MultiByteToWideChar(CP_UTF8, 0, utf8, -1, wbuffer, wlen);
-
-	int len = WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, nullptr, 0, nullptr, nullptr);
-	if (len == 0 || len >= MAX_ENCODING_BUFFER_SIZE) {
-		return nullptr;
-	}
-
-	WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, len, nullptr, nullptr);
-
-	return buffer;
+std::string Utf8ToGbk(const std::string& utf8_str) {
+    int wide_size = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), (int)utf8_str.size(), NULL, 0);
+    if (wide_size == 0) {
+        return utf8_str;
+    }
+    
+    std::vector<wchar_t> utf16_str(wide_size + 1, 0);
+    MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), (int)utf8_str.size(), &utf16_str[0], wide_size);
+    
+    int gbk_size = WideCharToMultiByte(CP_ACP, 0, &utf16_str[0], wide_size, NULL, 0, NULL, NULL);
+    if (gbk_size == 0) {
+        return utf8_str;
+    }
+    
+    std::vector<char> gbk_str(gbk_size + 1, 0);
+    WideCharToMultiByte(CP_ACP, 0, &utf16_str[0], wide_size, &gbk_str[0], gbk_size, NULL, NULL);
+    
+    return std::string(&gbk_str[0]);
 }
-char* GB2312ToUTF8(const char* gb2312) {
-	if (!gb2312 || *gb2312 == '\0') {
-		thread_local char empty[] = "";
-		return empty;
+
+std::string GbkToUtf8(const std::string& gbk_str) {
+	int wide_size = MultiByteToWideChar(CP_ACP, 0, gbk_str.c_str(), (int)gbk_str.size(), NULL, 0);
+	if (wide_size == 0) {
+		return gbk_str;
 	}
 
-	thread_local char buffer[MAX_ENCODING_BUFFER_SIZE];
-	thread_local wchar_t wbuffer[MAX_ENCODING_BUFFER_SIZE / 2];
+	std::vector<wchar_t> utf16_str(wide_size + 1, 0);
+	MultiByteToWideChar(CP_ACP, 0, gbk_str.c_str(), (int)gbk_str.size(), &utf16_str[0], wide_size);
 
-	int wlen = MultiByteToWideChar(CP_ACP, 0, gb2312, -1, nullptr, 0);
-	if (wlen == 0 || wlen >= MAX_ENCODING_BUFFER_SIZE / 2) {
-		return nullptr;
+	int utf8_size = WideCharToMultiByte(CP_UTF8, 0, &utf16_str[0], wide_size, NULL, 0, NULL, NULL);
+	if (utf8_size == 0) {
+		return gbk_str;
 	}
 
-	MultiByteToWideChar(CP_ACP, 0, gb2312, -1, wbuffer, wlen);
+	std::vector<char> utf8_str(utf8_size + 1, 0);
+	WideCharToMultiByte(CP_UTF8, 0, &utf16_str[0], wide_size, &utf8_str[0], utf8_size, NULL, NULL);
 
-	int len = WideCharToMultiByte(CP_UTF8, 0, wbuffer, -1, nullptr, 0, nullptr, nullptr);
-	if (len == 0 || len >= MAX_ENCODING_BUFFER_SIZE) {
-		return nullptr;
-	}
-
-	WideCharToMultiByte(CP_UTF8, 0, wbuffer, -1, buffer, len, nullptr, nullptr);
-
-	return buffer;
+	return std::string(&utf8_str[0]);
 }
 
 std::string WcharToChar(const std::wstring& wstr) {
@@ -77,13 +64,13 @@ std::string MakeDesPath(const std::string& srcPath, const std::string& extension
 	}
 	return srcPath + extension;
 }
-// »ñÈ¡ÎÄ¼şÃû£¨º¬À©Õ¹Ãû£©
+// è·å–æ–‡ä»¶åï¼ˆå«æ‰©å±•åï¼‰
 std::string GetFilename(const std::string& path) {
 	size_t pos = path.find_last_of("\\/");
 	return (pos == std::string::npos) ? path : path.substr(pos + 1);
 }
 
-// »ñÈ¡ÎÄ¼şÃû£¨²»º¬À©Õ¹Ãû£©
+// è·å–æ–‡ä»¶åï¼ˆä¸å«æ‰©å±•åï¼‰
 std::string GetFilenameWithoutExt(const std::string& path) {
 	std::string filename = GetFilename(path);
 	size_t dot_pos = filename.find_last_of('.');
@@ -93,7 +80,7 @@ std::string GetFilenameWithoutExt(const std::string& path) {
 std::vector<uint8_t> LoadFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::binary | std::ios::ate);
 	if (!file.is_open()) {
-		throw std::runtime_error("ÎŞ·¨´ò¿ªÎÄ¼ş: " + filename);
+		throw std::runtime_error("æ— æ³•æ‰“å¼€æ–‡ä»¶: " + filename);
 	}
 
 	size_t size = file.tellg();
@@ -103,19 +90,22 @@ std::vector<uint8_t> LoadFile(const std::string& filename) {
 	file.read(reinterpret_cast<char*>(buffer.data()), size);
 	file.close();
 
-	STDOUT << "¼ÓÔØÎÄ¼ş: " << filename << " (" << size << " ×Ö½Ú)" << STDEND;
+	STDOUT << "åŠ è½½æ–‡ä»¶: " << filename << " (" << size << " å­—èŠ‚)" << STDEND;
 	return buffer;
 }
 
-// ¸¨Öúº¯Êı£ºĞ´ÈëÎÄ¼ş
-void WriteFile(const std::string& filename, std::vector<uint8_t>& data) {
-	std::ofstream file(filename, std::ios::binary);
+// è¾…åŠ©å‡½æ•°ï¼šå†™å…¥æ–‡ä»¶
+void WriteFile(const std::string& filename, std::vector<uint8_t>& data, bool conversion) {
+	std::string validFilePath = filename;
+	if (conversion)
+		validFilePath = Utf8ToGbk(filename);
+	std::ofstream file(validFilePath, std::ios::binary);
 	if (!file.is_open()) {
-		throw std::runtime_error("ÎŞ·¨Ğ´ÈëÎÄ¼ş: " + filename);
+		throw std::runtime_error("æ— æ³•å†™å…¥æ–‡ä»¶: " + filename);
 	}
 	file.write(reinterpret_cast<const char*>(data.data()), data.size());
 	file.close();
-	STDOUT << "Ğ´ÈëÎÄ¼ş: " << filename << " (" << data.size() << " ×Ö½Ú)" << STDEND;
+	STDOUT << "å†™å…¥æ–‡ä»¶: " << filename << " (" << data.size() << " å­—èŠ‚)" << STDEND;
 }
 std::string StrTrim(const std::string& str) {
 	size_t start = str.find_first_not_of(" \t\n\r");
@@ -129,7 +119,7 @@ std::string StrJoin(const std::vector<std::string>& elements, const std::string&
 	}
 
 	std::string result;
-	result.reserve(elements.size() * 20); // ´ÖÂÔÔ¤·ÖÅä
+	result.reserve(elements.size() * 20); // ç²—ç•¥é¢„åˆ†é…
 
 	result += elements[0];
 	for (size_t i = 1; i < elements.size(); ++i) {
@@ -144,7 +134,7 @@ void StrSplit(const std::string& str, const std::string& delimiters,
 	size_t start = 0;
 	size_t end = 0;
 	while ((end = str.find_first_of(delimiters, start)) != std::string::npos) {
-		if (end != start) {  // ºöÂÔ¿Õ×Ö·û´®
+		if (end != start) {  // å¿½ç•¥ç©ºå­—ç¬¦ä¸²
 			callback(str.substr(start, end - start));
 		}
 		start = end + 1;

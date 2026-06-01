@@ -16,23 +16,23 @@
 
 class ExcelToFlatBuffer {
 public:
-    // ¹¹Ôìº¯Êı
+    // æ„é€ å‡½æ•°
     ExcelToFlatBuffer();
 
-    void SetSymbol(const std::string& dataTime, const std::string& hostInfo, const std::string& macAddress);
+    void SetSymbol(bool inpncc, bool outpncc, const std::string& dataTime, const std::string& hostInfo, const std::string& macAddress);
 
-    // Ö´ĞĞ×ª»»
+    // æ‰§è¡Œè½¬æ¢
     bool Convert(const std::string& metadataPath, const std::string& bfbsPath,
         const std::string& excelPath, const std::string& outputPath);
 
-    // »ñÈ¡´íÎóĞÅÏ¢
+    // è·å–é”™è¯¯ä¿¡æ¯
     std::string GetLastError() const { return m_lastError; }
 
 private:
-    // ÄÚ²¿ÀàĞÍ¶¨Òå
+    // å†…éƒ¨ç±»å‹å®šä¹‰
     using InfoOffsetsType = std::vector<flatbuffers::Offset<flatbuffers::Table>>;
 
-    // ºËĞÄ´¦Àí·½·¨
+    // æ ¸å¿ƒå¤„ç†æ–¹æ³•
     bool LoadSchema(const std::string& bfbsPath);
     bool LoadMetadata(const std::string& metadataPath);
     void ParseField(flatbuffers::FlatBufferBuilder& builder,
@@ -47,7 +47,7 @@ private:
         nlohmann::json& infoMetadataObj);
     bool ParseExcel(const std::string& excelPath, const std::string& outputPath);
 
-    // ³ÉÔ±±äÁ¿
+    // æˆå‘˜å˜é‡
     std::string m_lastError;
     const reflection::Schema* m_pSchema = nullptr;
     std::vector<uint8_t> m_schemaData;
@@ -56,6 +56,8 @@ private:
     std::map<std::string, InfoOffsetsType> m_tblOffsets;
     std::vector<uint8_t> m_outputData;
 
+    bool m_inPathNeedCodeConversion = false;
+    bool m_outPathNeedCodeConversion = false;
     std::string m_dateTime;
     std::string m_hostInfo;
     std::string m_macAddress;

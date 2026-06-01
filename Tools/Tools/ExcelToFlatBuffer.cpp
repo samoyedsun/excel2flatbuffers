@@ -14,15 +14,15 @@ ExcelToFlatBuffer::ExcelToFlatBuffer() {
     m_pSchema = nullptr;
 }
 
-void ExcelToFlatBuffer::SetSymbol(const std::string& dataTime
+void ExcelToFlatBuffer::SetSymbol(bool inpncc, bool outpncc
+    , const std::string& dataTime
     , const std::string& hostInfo
     , const std::string& macAddress) {
+    m_inPathNeedCodeConversion = inpncc;
+    m_outPathNeedCodeConversion = outpncc;
     m_dateTime = dataTime;
     m_hostInfo = hostInfo;
     m_macAddress = macAddress;
-    STDOUT << "Ê±¼ä£º" << m_dateTime << STDEND;
-    STDOUT << "Ö÷»ú£º" << m_hostInfo << STDEND;
-    STDOUT << "µØÖ·£º" << m_macAddress << STDEND;
 }
 
 bool ExcelToFlatBuffer::Convert(
@@ -30,17 +30,17 @@ bool ExcelToFlatBuffer::Convert(
     const std::string& bfbsPath,
     const std::string& excelPath,
     const std::string& outputPath) {
-    // ÌáÈ¡ÎÄ¼şÃûÓÃÓÚ²éÕÒÔªÊı¾İ
+    // æå–æ–‡ä»¶åç”¨äºæŸ¥æ‰¾å…ƒæ•°æ®
     m_excelFileName = GetFilenameWithoutExt(excelPath);
-    // ¼ÓÔØ Schema
+    // åŠ è½½ Schema
     if (!LoadSchema(bfbsPath)) {
         return false;
     }
-    // ¼ÓÔØ Metadata
+    // åŠ è½½ Metadata
     if (!LoadMetadata(metadataPath)) {
         return false;
     }
-    // ½âÎö Excel
+    // è§£æ Excel
     if (!ParseExcel(excelPath, outputPath)) {
         return false;
     }
@@ -53,22 +53,20 @@ bool ExcelToFlatBuffer::LoadSchema(const std::string& bfbsPath) {
 
         flatbuffers::Verifier schemaVerifier(m_schemaData.data(), m_schemaData.size());
         if (!reflection::VerifySchemaBuffer(schemaVerifier)) {
-            m_lastError = ".bfbs ÎÄ¼şÎŞĞ§: " + bfbsPath;
-            STDERR << "´íÎó: " << m_lastError << STDEND;
+            m_lastError = ".bfbs æ–‡ä»¶æ— æ•ˆ: " + bfbsPath;
             return false;
         }
 
         m_pSchema = reflection::GetSchema(m_schemaData.data());
 
-        STDOUT << "=== Schema ĞÅÏ¢ ===" << STDEND;
-        STDOUT << "¸ù±í: " << m_pSchema->root_table()->name()->str() << STDEND;
-        STDOUT << "¶ÔÏóÊıÁ¿: " << m_pSchema->objects()->size() << STDEND;
+        STDOUT << "=== Schema ä¿¡æ¯ ===" << STDEND;
+        STDOUT << "æ ¹è¡¨: " << m_pSchema->root_table()->name()->str() << STDEND;
+        STDOUT << "å¯¹è±¡æ•°é‡: " << m_pSchema->objects()->size() << STDEND;
 
         return true;
     }
     catch (const std::exception& e) {
-        m_lastError = "¼ÓÔØ Schema Ê§°Ü: " + std::string(e.what());
-        STDERR << "´íÎó: " << m_lastError << STDEND;
+        m_lastError = "åŠ è½½ Schema å¤±è´¥: " + std::string(e.what());
         return false;
     }
 }
@@ -79,8 +77,7 @@ bool ExcelToFlatBuffer::LoadMetadata(const std::string& metadataPath) {
         std::string jsonStr(jsonBuffer.begin(), jsonBuffer.end());
 
         if (jsonStr.empty()) {
-            m_lastError = "ÔªÊı¾İÎÄ¼şÎª¿Õ: " + metadataPath;
-            STDERR << "´íÎó: " << m_lastError << STDEND;
+            m_lastError = "å…ƒæ•°æ®æ–‡ä»¶ä¸ºç©º: " + metadataPath;
             return false;
         }
 
@@ -89,8 +86,7 @@ bool ExcelToFlatBuffer::LoadMetadata(const std::string& metadataPath) {
         return true;
     }
     catch (const std::exception& e) {
-        m_lastError = "¼ÓÔØÔªÊı¾İÊ§°Ü: " + std::string(e.what());
-        STDERR << "´íÎó: " << m_lastError << STDEND;
+        m_lastError = "åŠ è½½å…ƒæ•°æ®å¤±è´¥: " + std::string(e.what());
         return false;
     }
 }
@@ -324,14 +320,14 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
     size_t maxColumn = ws.columnCount();
     std::vector<std::string> keys;
 
-    // ¶ÁÈ¡µÚÒ»ĞĞ£¨±íÍ·£©
+    // è¯»å–ç¬¬ä¸€è¡Œï¼ˆè¡¨å¤´ï¼‰
     int32_t rowIndex = 1;
     ReadExcelLine(maxColumn, [rowIndex, &ws, &keys](int32_t colIndex) {
         auto cell = ws.cell(rowIndex, colIndex);
         keys.emplace_back(cell.getString());
         });
 
-    // ¶ÁÈ¡Êı¾İĞĞ
+    // è¯»å–æ•°æ®è¡Œ
     for (rowIndex += 1; rowIndex <= maxRow; ++rowIndex) {
         auto tableStart = builder.StartTable();
 
@@ -343,18 +339,18 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
                 return;
             }
             if (!infoMetadataObj.contains(key)) {
-                //STDERR << "´íÎó: Î´ÕÒµ½¶ÔÓ¦×Ö¶ÎµÄÔªÊı¾İ " << ws.title()
-                //    << ":" << std::string(UTF8ToGB2312(key.c_str())) << STDEND;
-                // ÔªÊı¾İÎ´Åä ËµÃ÷²»ĞèÒªµ¼³ö
+                //STDERR << "é”™è¯¯: æœªæ‰¾åˆ°å¯¹åº”å­—æ®µçš„å…ƒæ•°æ® " << ws.name()
+                //    << ":" << key << STDEND;
+                // å…ƒæ•°æ®æœªé… è¯´æ˜ä¸éœ€è¦å¯¼å‡º
                 return;
             }
             auto jsonValue = infoMetadataObj.at(key);
             auto pField = pObject->fields()->LookupByKey(jsonValue);
             if (!pField) {
-                STDERR << "´íÎó: ÕÒ²»µ½×Ö¶Î " << key << " ¶¨Òå" << STDEND;
+                STDERR << "é”™è¯¯: æ‰¾ä¸åˆ°å­—æ®µ " << key << " å®šä¹‰" << STDEND;
                 return;
             }
-            std::string value = UTF8ToGB2312(cell.getString().c_str());
+            std::string value = Utf8ToGbk(cell.getString());
             ParseField(builder, pField, key, StrTrim(value));
             });
 
@@ -365,14 +361,15 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
 
 bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::string& outputPath) {
     try {
-        // ×ª»»Â·¾¶±àÂë£¨Ö§³ÖÖĞÎÄÂ·¾¶£©
-        std::string utf8Path = GB2312ToUTF8(excelPath.c_str());
-        OpenXLSX::XLDocument doc(utf8Path);;
-        STDOUT << "=== Excel ĞÅÏ¢ ===" << STDEND;
+        std::string validExcelPath = excelPath;
+        if (m_inPathNeedCodeConversion)
+            validExcelPath = GbkToUtf8(excelPath);
+        OpenXLSX::XLDocument doc(validExcelPath);;
+        STDOUT << "=== Excel ä¿¡æ¯ ===" << STDEND;
         std::map<std::string, OpenXLSX::XLWorksheet> sheets;
         auto workbook = doc.workbook();
         int sheetCount = workbook.sheetCount();
-        STDOUT << "×Ü¹²ÓĞ " << sheetCount << " ¸ö¹¤×÷±í" << STDEND;
+        STDOUT << "æ€»å…±æœ‰ " << sheetCount << " ä¸ªå·¥ä½œè¡¨" << STDEND;
         std::vector<std::string> sheetNames = workbook.sheetNames();
         for (const auto& sheeName : sheetNames) {
             auto ws = workbook.worksheet(sheeName);
@@ -385,20 +382,19 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
 
         auto pRootTable = m_pSchema->root_table();
         if (!pRootTable) {
-            m_lastError = "Î´ÕÒµ½¸ù±í¶¨Òå";
+            m_lastError = "æœªæ‰¾åˆ°æ ¹è¡¨å®šä¹‰";
             return false;
         }
 
-        // ¼ì²éÔªÊı¾İÖĞÊÇ·ñÓĞµ±Ç° Excel ÎÄ¼şµÄÅäÖÃ
+        // æ£€æŸ¥å…ƒæ•°æ®ä¸­æ˜¯å¦æœ‰å½“å‰ Excel æ–‡ä»¶çš„é…ç½®
         if (!m_metadataRoot.contains(m_excelFileName)) {
-            m_lastError = "Î´ÕÒµ½¶ÔÓ¦µÄÔªÊı¾İ: " + m_excelFileName;
-            STDERR << "´íÎó: " << m_lastError << STDEND;
+            m_lastError = "æœªæ‰¾åˆ°å¯¹åº”çš„å…ƒæ•°æ®: " + m_excelFileName;
             return false;
         }
 
         auto tblMetadata = m_metadataRoot[m_excelFileName];
 
-        // ±éÀú¸ù±íµÄËùÓĞ×Ö¶Î
+        // éå†æ ¹è¡¨çš„æ‰€æœ‰å­—æ®µ
         for (auto pField : *pRootTable->fields()) {
             if (!pField) continue;
 
@@ -416,16 +412,16 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
                         auto pObject = m_pSchema->objects()->Get(typeIndex);
                         os << " typeName:" << pObject->name()->str();
 
-                        // ¼ì²é¹¤×÷±íÊÇ·ñ´æÔÚ
+                        // æ£€æŸ¥å·¥ä½œè¡¨æ˜¯å¦å­˜åœ¨
                         if (sheets.find(pField->name()->str()) == sheets.end()) {
-                            STDERR << "´íÎó: Î´ÕÒµ½¶ÔÓ¦µÄÊı¾İ±í "
+                            STDERR << "é”™è¯¯: æœªæ‰¾åˆ°å¯¹åº”çš„æ•°æ®è¡¨ "
                                 << m_excelFileName << ":" << pField->name()->str() << STDEND;
                             continue;
                         }
 
-                        // ¼ì²éÔªÊı¾İÊÇ·ñ´æÔÚ
+                        // æ£€æŸ¥å…ƒæ•°æ®æ˜¯å¦å­˜åœ¨
                         if (!tblMetadata.contains(pObject->name()->str())) {
-                            STDERR << "´íÎó: Î´ÕÒµ½¶ÔÓ¦±í×Ö¶ÎµÄÔªÊı¾İ "
+                            STDERR << "é”™è¯¯: æœªæ‰¾åˆ°å¯¹åº”è¡¨å­—æ®µçš„å…ƒæ•°æ® "
                                 << m_excelFileName << ":" << pObject->name()->str() << STDEND;
                             continue;
                         }
@@ -435,7 +431,7 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
                         OpenXLSX::XLWorksheet ws = sheets[pField->name()->str()];
                         size_t maxRow = ws.rowCount();
                         size_t maxColumn = ws.columnCount();
-                        STDOUT << "sheet:" << pField->name()->str() << "\tĞĞÊı£º" << maxRow << "\tÁĞÊı£º" << maxColumn << STDEND;
+                        STDOUT << "sheet:" << pField->name()->str() << "\tè¡Œæ•°ï¼š" << maxRow << "\tåˆ—æ•°ï¼š" << maxColumn << STDEND;
                         ReadExcelSheet(ws, builder, infoOffsets, pObject, infoMetadata);
                         m_tblOffsets.emplace(pField->name()->str(), infoOffsets);
                     }
@@ -444,7 +440,7 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
             }
         }
 
-        // ¹¹½¨×îÖÕÊä³ö
+        // æ„å»ºæœ€ç»ˆè¾“å‡º
         if (!m_tblOffsets.empty()) {
             auto tableStart = builder.StartTable();
 
@@ -485,19 +481,18 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
             m_outputData.assign(builder.GetBufferPointer(),
                 builder.GetBufferPointer() + builder.GetSize());
 
-            STDOUT << "Êä³öÊı¾İ´óĞ¡: " << m_outputData.size() << " ×Ö½Ú" << STDEND;
-            WriteFile(outputPath, m_outputData);
+            STDOUT << "è¾“å‡ºæ•°æ®å¤§å°: " << m_outputData.size() << " å­—èŠ‚" << STDEND;
+            WriteFile(outputPath, m_outputData, m_outPathNeedCodeConversion);
 
             return true;
         }
 
-        m_lastError = "Ã»ÓĞÕÒµ½ÈÎºÎÓĞĞ§µÄÊı¾İ±í";
+        m_lastError = "æ²¡æœ‰æ‰¾åˆ°ä»»ä½•æœ‰æ•ˆçš„æ•°æ®è¡¨";
         return false;
 
     }
     catch (const std::exception& e) {
-        m_lastError = "¹¹½¨Êä³öÊ§°Ü: " + std::string(e.what());
-        STDERR << "´íÎó: " << m_lastError << STDEND;
+        m_lastError = "æ„å»ºè¾“å‡ºå¤±è´¥: " + std::string(e.what());
         return false;
     }
 }

@@ -128,6 +128,7 @@
       <AdditionalIncludeDirectories>$(SVR_Header_2D)\sdk\OpenXLSX-0.5.0\include;$(SVR_Header_2D)\sdk\flatbuffers-25.12.19\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

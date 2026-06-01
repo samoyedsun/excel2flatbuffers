@@ -9,14 +9,14 @@
 #define STDERR std::cerr << "\033[31m"
 #define STDEND "\033[0m" << std::endl
 
-char* UTF8ToGB2312(const char* utf8);
-char* GB2312ToUTF8(const char* gb2312);
+std::string Utf8ToGbk(const std::string& utf8_str);
+std::string GbkToUtf8(const std::string& gbk_str);
 std::string WcharToChar(const std::wstring& wstr);
 std::string MakeDesPath(const std::string& srcPath, const std::string& extension);
-// 获取文件名（不含扩展名）
+// 鑾峰彇鏂囦欢鍚嶏紙涓嶅惈鎵╁睍鍚嶏級
 std::string GetFilenameWithoutExt(const std::string& path);
 std::vector<uint8_t> LoadFile(const std::string& filename);
-void WriteFile(const std::string& filename, std::vector<uint8_t>& data);
+void WriteFile(const std::string& filename, std::vector<uint8_t>& data, bool conversion = false);
 
 std::string StrTrim(const std::string& str);
 std::string StrJoin(const std::vector<std::string>& elements, const std::string& delimiter);

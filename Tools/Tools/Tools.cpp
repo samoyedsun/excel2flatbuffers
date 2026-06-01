@@ -23,7 +23,7 @@ std::vector<AdapterInfo> GetAdaptersInfoList()
     ULONG outBufLen = sizeof(IP_ADAPTER_INFO);
     PIP_ADAPTER_INFO pAdapterInfo = (IP_ADAPTER_INFO*)malloc(outBufLen);
 
-    // µ⁄“ª¥Œµ˜”√ªÒ»°ª∫≥Â«¯¥Û–°
+    // Á¨¨‰∏ÄÊ¨°Ë∞ÉÁî®Ëé∑ÂèñÁºìÂÜ≤Âå∫Â§ßÂ∞è
     if (GetAdaptersInfo(pAdapterInfo, &outBufLen) == ERROR_BUFFER_OVERFLOW) {
         free(pAdapterInfo);
         pAdapterInfo = (IP_ADAPTER_INFO*)malloc(outBufLen);
@@ -34,7 +34,7 @@ std::vector<AdapterInfo> GetAdaptersInfoList()
         while (pAdapter) {
             AdapterInfo info;
 
-            // ªÒ»°MACµÿ÷∑
+            // Ëé∑ÂèñMACÂú∞ÂùÄ
             char macStr[18] = { 0 };
             sprintf_s(macStr, sizeof(macStr),
                 "%02X:%02X:%02X:%02X:%02X:%02X",
@@ -46,7 +46,7 @@ std::vector<AdapterInfo> GetAdaptersInfoList()
                 static_cast<unsigned char>(pAdapter->Address[5]));
             info.mac = macStr;
 
-            // ªÒ»°IPv4µÿ÷∑£®ø…—°£∫π˝¬ÀÃÿ∂®¿‡–Õ£©
+            // Ëé∑ÂèñIPv4Âú∞ÂùÄÔºàÂèØÈÄâÔºöËøáÊª§ÁâπÂÆöÁ±ªÂûãÔºâ
             PIP_ADDR_STRING pIpAddr = &pAdapter->IpAddressList;
             while (pIpAddr) {
                 if (pIpAddr->IpAddress.String[0] != '\0') {
@@ -92,7 +92,7 @@ std::string GetHostInfo() {
             break;
         userName = WcharToChar(buffer.data());
     } while (false);
-    return StrJoin({ UTF8ToGB2312(hostName.c_str()), UTF8ToGB2312(userName.c_str()) }, "|");
+    return StrJoin({ Utf8ToGbk(hostName), Utf8ToGbk(userName) }, "|");
 }
 
 std::string GetCurrentTimeString() {
@@ -105,25 +105,50 @@ std::string GetCurrentTimeString() {
     return oss.str();
 }
 
+enum EOpenType
+{
+    EOT_InPathCodeConvert = 1 << 0,
+    EOT_OutPathCodeConvert = 1 << 1,
+    EOT_OpenSystemInfo = 1 << 2,
+};
+
 int main(int argc, char* argv[]) {
-    if (argc != 5) {
-        STDERR << "”√∑®: " << argv[0] << " <schema.bfbs> <excel.xlsx> <output.bin>" << STDEND;
-        return 1;
+    if (argc < 5 || argc > 6) {
+        STDERR << "Áî®Ê≥ï: " << argv[0] << " <schema.bfbs> <excel.xlsx> <output.bin> <flag>" << STDEND;
+        return -1;
     }
-    std::string metadataFile = argv[1];
-    std::string bfbsFile = argv[2];
-    std::string excelFile = argv[3];
-    std::string outputFile = argv[4];
+    std::string metadataFile;
+    std::string bfbsFile;
+    std::string excelFile;
+    std::string outputFile;
+    std::uint8_t openFlag = 0;
+    if (argc >= 5) {
+        metadataFile = argv[1];
+        bfbsFile = argv[2];
+        excelFile = argv[3];
+        outputFile = argv[4];
+    }
+    if (argc == 6) {
+        openFlag = std::stoul(argv[5]);
+    }
     STDOUT << "metadataFile: " << metadataFile << STDEND;
     STDOUT << "bfbsFile: " << bfbsFile << STDEND;
     STDOUT << "excelFile: " << excelFile << STDEND;
     STDOUT << "outputFile: " << outputFile << STDEND;
-    ExcelToFlatBuffer converter;
-    converter.SetSymbol(GetCurrentTimeString(), GetHostInfo(), GetLocalAddress());
-    if (!converter.Convert(metadataFile, bfbsFile, excelFile, outputFile)) {
-        STDERR << "◊™ªª ß∞‹: " << converter.GetLastError() << STDEND;
-        return 1;
+    bool inpncc = openFlag & EOT_InPathCodeConvert;
+    bool outpncc = openFlag & EOT_OutPathCodeConvert;
+    std::string currentTime, hostInfo, localAddress;
+    if (openFlag & EOT_OpenSystemInfo) {
+        currentTime = GetCurrentTimeString();
+        hostInfo = GetHostInfo();
+        localAddress = GetLocalAddress();
     }
-    STDOUT << "◊™ªª≥…π¶!" << STDEND;
+    ExcelToFlatBuffer converter;
+    converter.SetSymbol(inpncc, outpncc, currentTime, hostInfo, localAddress);
+    if (!converter.Convert(metadataFile, bfbsFile, excelFile, outputFile)) {
+        STDERR << "ËΩ¨Êç¢Â§±Ë¥•: " << converter.GetLastError() << STDEND;
+        return -2;
+    }
+    STDOUT << "ËΩ¨Êç¢ÊàêÂäü!" << STDEND;
     return 0;
 }

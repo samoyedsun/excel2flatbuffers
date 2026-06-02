@@ -14,11 +14,10 @@ ExcelToFlatBuffer::ExcelToFlatBuffer() {
     m_pSchema = nullptr;
 }
 
-void ExcelToFlatBuffer::SetSymbol(bool inpncc, bool outpncc
+void ExcelToFlatBuffer::SetSymbol(bool outpncc
     , const std::string& dataTime
     , const std::string& hostInfo
     , const std::string& macAddress) {
-    m_inPathNeedCodeConversion = inpncc;
     m_outPathNeedCodeConversion = outpncc;
     m_dateTime = dataTime;
     m_hostInfo = hostInfo;
@@ -48,47 +47,37 @@ bool ExcelToFlatBuffer::Convert(
 }
 
 bool ExcelToFlatBuffer::LoadSchema(const std::string& bfbsPath) {
-    try {
-        m_schemaData = LoadFile(bfbsPath);
-
-        flatbuffers::Verifier schemaVerifier(m_schemaData.data(), m_schemaData.size());
-        if (!reflection::VerifySchemaBuffer(schemaVerifier)) {
-            m_lastError = ".bfbs 文件无效: " + bfbsPath;
-            return false;
-        }
-
-        m_pSchema = reflection::GetSchema(m_schemaData.data());
-
-        STDOUT << "=== Schema 信息 ===" << STDEND;
-        STDOUT << "根表: " << m_pSchema->root_table()->name()->str() << STDEND;
-        STDOUT << "对象数量: " << m_pSchema->objects()->size() << STDEND;
-
-        return true;
-    }
-    catch (const std::exception& e) {
-        m_lastError = "加载 Schema 失败: " + std::string(e.what());
+    if (!LoadFile(bfbsPath, m_schemaData)) {
+        m_lastError = "无法打开文件: " + bfbsPath;
         return false;
     }
+    flatbuffers::Verifier schemaVerifier(m_schemaData.data(), m_schemaData.size());
+    if (!reflection::VerifySchemaBuffer(schemaVerifier)) {
+        m_lastError = ".bfbs 文件无效: " + bfbsPath;
+        return false;
+    }
+    STDOUT << "加载文件(" << m_schemaData.size() << " 字节): " << bfbsPath << STDEND;
+    m_pSchema = reflection::GetSchema(m_schemaData.data());
+    STDOUT << "=== Schema 信息 ===" << STDEND;
+    STDOUT << "根表: " << m_pSchema->root_table()->name()->str() << STDEND;
+    STDOUT << "对象数量: " << m_pSchema->objects()->size() << STDEND;
+    return true;
 }
 
 bool ExcelToFlatBuffer::LoadMetadata(const std::string& metadataPath) {
-    try {
-        auto jsonBuffer = LoadFile(metadataPath);
-        std::string jsonStr(jsonBuffer.begin(), jsonBuffer.end());
-
-        if (jsonStr.empty()) {
-            m_lastError = "元数据文件为空: " + metadataPath;
-            return false;
-        }
-
-        m_metadataRoot = nlohmann::json::parse(jsonStr);
-
-        return true;
-    }
-    catch (const std::exception& e) {
-        m_lastError = "加载元数据失败: " + std::string(e.what());
+    std::vector<uint8_t> buffer;
+    if (!LoadFile(metadataPath, buffer)) {
+        m_lastError = "无法打开文件: " + metadataPath;
         return false;
     }
+    STDOUT << "加载文件(" << buffer.size() << " 字节): " << metadataPath << STDEND;
+    std::string jsonStr(buffer.begin(), buffer.end());
+    if (jsonStr.empty()) {
+        m_lastError = "元数据文件为空: " + metadataPath;
+        return false;
+    }
+    m_metadataRoot = nlohmann::json::parse(jsonStr);
+    return true;
 }
 
 void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
@@ -336,11 +325,12 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
             auto& key = keys[colIndex - 1];
             auto& val = cell.value();
             if (val.type() == OpenXLSX::XLValueType::Empty) {
+                // STDERR << "发现空值：" << colIndex << "-" << rowIndex << "-" << ws.name() << ":" << key << STDEND;
+                // 未配的不需要导出 因为字段都是可选的
                 return;
             }
             if (!infoMetadataObj.contains(key)) {
-                //STDERR << "错误: 未找到对应字段的元数据 " << ws.name()
-                //    << ":" << key << STDEND;
+                // STDERR << "未找到对应字段的元数据：" << colIndex << "-" << rowIndex << "-" << ws.name() << ":" << key << STDEND;
                 // 元数据未配 说明不需要导出
                 return;
             }
@@ -361,10 +351,7 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
 
 bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::string& outputPath) {
     try {
-        std::string validExcelPath = excelPath;
-        if (m_inPathNeedCodeConversion)
-            validExcelPath = GbkToUtf8(excelPath);
-        OpenXLSX::XLDocument doc(validExcelPath);;
+        OpenXLSX::XLDocument doc(excelPath);;
         STDOUT << "=== Excel 信息 ===" << STDEND;
         std::map<std::string, OpenXLSX::XLWorksheet> sheets;
         auto workbook = doc.workbook();
@@ -481,9 +468,14 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
             m_outputData.assign(builder.GetBufferPointer(),
                 builder.GetBufferPointer() + builder.GetSize());
 
-            STDOUT << "输出数据大小: " << m_outputData.size() << " 字节" << STDEND;
-            WriteFile(outputPath, m_outputData, m_outPathNeedCodeConversion);
-
+            std::string validFilePath = outputPath;
+            if (m_outPathNeedCodeConversion)
+                validFilePath = Utf8ToGbk(outputPath);
+            if (!WriteFile(validFilePath, m_outputData)) {
+                m_lastError = "无法写入文件: " + outputPath;
+                return false;
+            }
+            STDOUT << "写入文件(" << m_outputData.size() << " 字节): " << outputPath << STDEND;
             return true;
         }
 

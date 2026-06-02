@@ -47,7 +47,7 @@ int main()
 				<< ",type:" << pInfo->type()
 				<< ",num:" << pInfo->num()
 				<< ",size:" << pInfo->num_list()->size()
-				<< ",str:" << pInfo->str()->str()
+				<< ",str:" << (pInfo->str() ? pInfo->str()->str() : "×¢Òâ¿Õ×Ö·û´®ÊÇ¿ÕÖ¸Õë")
 				<< STDEND;
 			if (pInfo->num_list()) {
 				for (const auto num : *(pInfo->num_list())) {

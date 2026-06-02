@@ -19,7 +19,7 @@ public:
     // 构造函数
     ExcelToFlatBuffer();
 
-    void SetSymbol(bool inpncc, bool outpncc, const std::string& dataTime, const std::string& hostInfo, const std::string& macAddress);
+    void SetSymbol(bool outpncc, const std::string& dataTime, const std::string& hostInfo, const std::string& macAddress);
 
     // 执行转换
     bool Convert(const std::string& metadataPath, const std::string& bfbsPath,
@@ -56,7 +56,6 @@ private:
     std::map<std::string, InfoOffsetsType> m_tblOffsets;
     std::vector<uint8_t> m_outputData;
 
-    bool m_inPathNeedCodeConversion = false;
     bool m_outPathNeedCodeConversion = false;
     std::string m_dateTime;
     std::string m_hostInfo;

@@ -113,6 +113,7 @@ enum EOpenType
 };
 
 int main(int argc, char* argv[]) {
+    STDOUT << "参数数量: " << argc << ",编码：" << GetConsoleCP() << STDEND;
     if (argc < 5 || argc > 6) {
         STDERR << "用法: " << argv[0] << " <schema.bfbs> <excel.xlsx> <output.bin> <flag>" << STDEND;
         return -1;
@@ -131,11 +132,16 @@ int main(int argc, char* argv[]) {
     if (argc == 6) {
         openFlag = std::stoul(argv[5]);
     }
+    if (openFlag & EOT_InPathCodeConvert) {
+        metadataFile = GbkToUtf8(metadataFile);
+        bfbsFile = GbkToUtf8(bfbsFile);
+        excelFile = GbkToUtf8(excelFile);
+        outputFile = GbkToUtf8(outputFile);
+    }
     STDOUT << "metadataFile: " << metadataFile << STDEND;
     STDOUT << "bfbsFile: " << bfbsFile << STDEND;
     STDOUT << "excelFile: " << excelFile << STDEND;
     STDOUT << "outputFile: " << outputFile << STDEND;
-    bool inpncc = openFlag & EOT_InPathCodeConvert;
     bool outpncc = openFlag & EOT_OutPathCodeConvert;
     std::string currentTime, hostInfo, localAddress;
     if (openFlag & EOT_OpenSystemInfo) {
@@ -144,7 +150,7 @@ int main(int argc, char* argv[]) {
         localAddress = GetLocalAddress();
     }
     ExcelToFlatBuffer converter;
-    converter.SetSymbol(inpncc, outpncc, currentTime, hostInfo, localAddress);
+    converter.SetSymbol(outpncc, currentTime, hostInfo, localAddress);
     if (!converter.Convert(metadataFile, bfbsFile, excelFile, outputFile)) {
         STDERR << "转换失败: " << converter.GetLastError() << STDEND;
         return -2;

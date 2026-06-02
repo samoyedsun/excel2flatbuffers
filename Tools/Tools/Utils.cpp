@@ -77,35 +77,24 @@ std::string GetFilenameWithoutExt(const std::string& path) {
 	return (dot_pos == std::string::npos) ? filename : filename.substr(0, dot_pos);
 }
 
-std::vector<uint8_t> LoadFile(const std::string& filename) {
+bool LoadFile(const std::string& filename, std::vector<uint8_t>& buffer) {
 	std::ifstream file(filename, std::ios::binary | std::ios::ate);
-	if (!file.is_open()) {
-		throw std::runtime_error("无法打开文件: " + filename);
-	}
-
+	if (!file.is_open())
+		return false;
 	size_t size = file.tellg();
 	file.seekg(0, std::ios::beg);
-
-	std::vector<uint8_t> buffer(size);
+	buffer.resize(size);
 	file.read(reinterpret_cast<char*>(buffer.data()), size);
 	file.close();
-
-	STDOUT << "加载文件: " << filename << " (" << size << " 字节)" << STDEND;
-	return buffer;
+	return true;
 }
-
-// 辅助函数：写入文件
-void WriteFile(const std::string& filename, std::vector<uint8_t>& data, bool conversion) {
-	std::string validFilePath = filename;
-	if (conversion)
-		validFilePath = Utf8ToGbk(filename);
-	std::ofstream file(validFilePath, std::ios::binary);
-	if (!file.is_open()) {
-		throw std::runtime_error("无法写入文件: " + filename);
-	}
+bool WriteFile(const std::string& filename, std::vector<uint8_t>& data) {
+	std::ofstream file(filename, std::ios::binary);
+	if (!file.is_open())
+		return false;
 	file.write(reinterpret_cast<const char*>(data.data()), data.size());
 	file.close();
-	STDOUT << "写入文件: " << filename << " (" << data.size() << " 字节)" << STDEND;
+	return true;
 }
 std::string StrTrim(const std::string& str) {
 	size_t start = str.find_first_not_of(" \t\n\r");

@@ -325,19 +325,21 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
             auto& key = keys[colIndex - 1];
             auto& val = cell.value();
             if (val.type() == OpenXLSX::XLValueType::Empty) {
-                // STDERR << "发现空值：" << colIndex << "-" << rowIndex << "-" << ws.name() << ":" << key << STDEND;
                 // 未配的不需要导出 因为字段都是可选的
                 return;
             }
             if (!infoMetadataObj.contains(key)) {
-                // STDERR << "未找到对应字段的元数据：" << colIndex << "-" << rowIndex << "-" << ws.name() << ":" << key << STDEND;
-                // 元数据未配 说明不需要导出
+                STDERR << "未找到对应字段的元数据：" << colIndex << "-" << rowIndex << "-" << ws.name() << ":" << key << STDEND;
                 return;
             }
-            auto jsonValue = infoMetadataObj.at(key);
+            auto jsonValue = infoMetadataObj[key];
+            if (jsonValue.is_null()) {
+                // 元数据配空代表不需要导出
+                return;
+            }
             auto pField = pObject->fields()->LookupByKey(jsonValue);
             if (!pField) {
-                STDERR << "错误: 找不到字段 " << key << " 定义" << STDEND;
+                STDERR << "反射字段未定义：" << colIndex << "-" << rowIndex << "-" << ws.name() << ":" << key << "-" << jsonValue << STDEND;
                 return;
             }
             std::string value = Utf8ToGbk(cell.getString());

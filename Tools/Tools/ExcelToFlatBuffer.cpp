@@ -1,7 +1,5 @@
 #include "ExcelToFlatBuffer.h"
 #include <sstream>
-#include <thread>
-#include <future>
 
 std::string toLower(const std::string& str) {
     std::string result;
@@ -339,10 +337,15 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
     // 读取数据行
     for (rowIndex += 1; rowIndex <= maxRow; ++rowIndex) {
         auto tableStart = builder.StartTable();
+        auto rowCells = ws.row(rowIndex);
         for (const auto& mapping : fieldMappings) {
-            auto cell = ws.cell(rowIndex, mapping.colIndex);
-            auto& val = cell.value();
-            if (val.type() == OpenXLSX::XLValueType::Empty) {
+            auto cell = rowCells.findCell(mapping.colIndex);
+            if (!cell) {
+                // 未配的不需要导出
+                continue;
+            }
+            auto& cellVal = cell.value();
+            if (cellVal.type() == OpenXLSX::XLValueType::Empty) {
                 // 未配的不需要导出 因为字段都是可选的
                 continue;
             }
@@ -353,11 +356,7 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
         infoOffsets.push_back(infoOffset);
 
         if (m_sendCommand) {
-            auto currPct = int32_t(rowIndex * 100 / maxRow);
-            if (pct != currPct) {
-                STDCMD << "@progress(" << rowIndex << "," << maxRow << ")" << STDEND;
-                pct = currPct;
-            }
+            STDCMD << "@progress(" << rowIndex << "," << maxRow << ")" << STDEND;
         }
     }
 }

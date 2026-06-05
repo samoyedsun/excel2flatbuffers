@@ -4,7 +4,6 @@
 #include <winsock2.h>
 #include <iphlpapi.h>
 #include "Utils.h"
-#include <thread>
 
 #pragma comment(lib, "iphlpapi.lib")
 
@@ -115,7 +114,7 @@ enum EOpenType
 };
 
 int main(int argc, char* argv[]) {
-    STDOUT << "参数数量: " << argc << ",编码：" << GetConsoleCP() << ",线程：" << std::thread::hardware_concurrency() << STDEND;
+    STDOUT << "参数数量:" << argc << ",编码:" << GetConsoleCP() << STDEND;
     if (argc < 5 || argc > 6) {
         STDERR << "用法: " << argv[0] << " <schema.bfbs> <excel.xlsx> <output.bin> <flag>" << STDEND;
         return -1;

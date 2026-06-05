@@ -1,5 +1,7 @@
 #include "ExcelToFlatBuffer.h"
 #include <sstream>
+#include <thread>
+#include <future>
 
 std::string toLower(const std::string& str) {
     std::string result;
@@ -14,12 +16,13 @@ ExcelToFlatBuffer::ExcelToFlatBuffer() {
     m_pSchema = nullptr;
 }
 
-void ExcelToFlatBuffer::SetSymbol(bool outpncc
-    , const std::string& dataTime
+void ExcelToFlatBuffer::SetSymbol(bool sendcmd, bool outpncc
+    , const std::string& dateTime
     , const std::string& hostInfo
     , const std::string& macAddress) {
     m_outPathNeedCodeConversion = outpncc;
-    m_dateTime = dataTime;
+    m_sendCommand = sendcmd;
+    m_dateTime = dateTime;
     m_hostInfo = hostInfo;
     m_macAddress = macAddress;
 }
@@ -29,6 +32,10 @@ bool ExcelToFlatBuffer::Convert(
     const std::string& bfbsPath,
     const std::string& excelPath,
     const std::string& outputPath) {
+    if (m_sendCommand) {
+        auto processId = GetProcessId();
+        STDCMD << "@processid(" << processId << ")" << STDEND;
+    }
     // 提取文件名用于查找元数据
     m_excelFileName = GetFilenameWithoutExt(excelPath);
     // 加载 Schema
@@ -80,10 +87,7 @@ bool ExcelToFlatBuffer::LoadMetadata(const std::string& metadataPath) {
     return true;
 }
 
-void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
-    const reflection::Field* pField,
-    const std::string& key,
-    const std::string& value) {
+void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder, const reflection::Field* pField, const std::string& value) {
     switch (pField->type()->base_type()) {
     case reflection::Bool:
     {
@@ -294,12 +298,6 @@ void ExcelToFlatBuffer::ParseField(flatbuffers::FlatBufferBuilder& builder,
     }
 }
 
-void ExcelToFlatBuffer::ReadExcelLine(size_t maxColumn, std::function<void(int32_t colIndex)> process) {
-    for (int32_t colIndex = 1; colIndex <= maxColumn; ++colIndex) {
-        process(colIndex);
-    }
-}
-
 void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
     flatbuffers::FlatBufferBuilder& builder,
     InfoOffsetsType& infoOffsets,
@@ -307,47 +305,60 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
     nlohmann::json& infoMetadataObj) {
     size_t maxRow = ws.rowCount();
     size_t maxColumn = ws.columnCount();
-    std::vector<std::string> keys;
 
-    // 读取第一行（表头）
+    // 读取第一行（表头）预解析字段映射（避免每行重复查找）
+    struct FieldMapping {
+        const reflection::Field* pField;
+        int32_t colIndex;
+    };
     int32_t rowIndex = 1;
-    ReadExcelLine(maxColumn, [rowIndex, &ws, &keys](int32_t colIndex) {
+    std::vector<FieldMapping> fieldMappings;
+    for (int32_t colIndex = 1; colIndex <= maxColumn; ++colIndex) {
         auto cell = ws.cell(rowIndex, colIndex);
-        keys.emplace_back(cell.getString());
-        });
-
+        auto key = cell.getString();
+        if (!infoMetadataObj.contains(key)) {
+            STDERR << "未找到对应字段的元数据：" << colIndex << "-" << ws.name() << ":" << key << STDEND;
+            continue;
+        }
+        auto jsonValue = infoMetadataObj[key];
+        if (jsonValue.is_null()) {
+            // 元数据配空代表不需要导出
+            continue;
+        }
+        auto pField = pObject->fields()->LookupByKey(jsonValue);
+        if (!pField) {
+            STDERR << "反射字段未定义：" << colIndex << "-" << ws.name() << ":" << key << "-" << jsonValue << STDEND;
+            continue;
+        }
+        FieldMapping mapping;
+        mapping.colIndex = colIndex;
+        mapping.pField = pField;
+        fieldMappings.push_back(mapping);
+    }
+    int32_t pct = 0;
     // 读取数据行
     for (rowIndex += 1; rowIndex <= maxRow; ++rowIndex) {
         auto tableStart = builder.StartTable();
-
-        ReadExcelLine(maxColumn, [this, rowIndex, &ws, &keys, &builder, pObject, &infoMetadataObj](int32_t colIndex) {
-            auto cell = ws.cell(rowIndex, colIndex);
-            auto& key = keys[colIndex - 1];
+        for (const auto& mapping : fieldMappings) {
+            auto cell = ws.cell(rowIndex, mapping.colIndex);
             auto& val = cell.value();
             if (val.type() == OpenXLSX::XLValueType::Empty) {
                 // 未配的不需要导出 因为字段都是可选的
-                return;
-            }
-            if (!infoMetadataObj.contains(key)) {
-                STDERR << "未找到对应字段的元数据：" << colIndex << "-" << rowIndex << "-" << ws.name() << ":" << key << STDEND;
-                return;
-            }
-            auto jsonValue = infoMetadataObj[key];
-            if (jsonValue.is_null()) {
-                // 元数据配空代表不需要导出
-                return;
-            }
-            auto pField = pObject->fields()->LookupByKey(jsonValue);
-            if (!pField) {
-                STDERR << "反射字段未定义：" << colIndex << "-" << rowIndex << "-" << ws.name() << ":" << key << "-" << jsonValue << STDEND;
-                return;
+                continue;
             }
             std::string value = Utf8ToGbk(cell.getString());
-            ParseField(builder, pField, key, StrTrim(value));
-            });
-
+            ParseField(builder, mapping.pField, StrTrim(value));
+        }
         auto infoOffset = builder.EndTable(tableStart);
         infoOffsets.push_back(infoOffset);
+
+        if (m_sendCommand) {
+            auto currPct = int32_t(rowIndex * 100 / maxRow);
+            if (pct != currPct) {
+                STDCMD << "@progress(" << rowIndex << "," << maxRow << ")" << STDEND;
+                pct = currPct;
+            }
+        }
     }
 }
 

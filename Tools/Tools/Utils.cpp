@@ -132,3 +132,7 @@ void StrSplit(const std::string& str, const std::string& delimiters,
 		callback(str.substr(start));
 	}
 }
+
+uint32_t GetProcessId() {
+	return GetCurrentProcessId();
+}

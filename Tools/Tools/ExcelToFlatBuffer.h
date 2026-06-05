@@ -19,7 +19,7 @@ public:
     // 构造函数
     ExcelToFlatBuffer();
 
-    void SetSymbol(bool outpncc, const std::string& dataTime, const std::string& hostInfo, const std::string& macAddress);
+    void SetSymbol(bool sendcmd, bool outpncc, const std::string& dateTime, const std::string& hostInfo, const std::string& macAddress);
 
     // 执行转换
     bool Convert(const std::string& metadataPath, const std::string& bfbsPath,
@@ -35,11 +35,7 @@ private:
     // 核心处理方法
     bool LoadSchema(const std::string& bfbsPath);
     bool LoadMetadata(const std::string& metadataPath);
-    void ParseField(flatbuffers::FlatBufferBuilder& builder,
-        const reflection::Field* pField,
-        const std::string& key,
-        const std::string& value);
-    void ReadExcelLine(size_t maxColumn, std::function<void(int32_t colIndex)> process);
+    void ParseField(flatbuffers::FlatBufferBuilder& builder, const reflection::Field* pField, const std::string& value);
     void ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
         flatbuffers::FlatBufferBuilder& builder,
         InfoOffsetsType& infoOffsets,
@@ -57,6 +53,7 @@ private:
     std::vector<uint8_t> m_outputData;
 
     bool m_outPathNeedCodeConversion = false;
+    bool m_sendCommand = false;
     std::string m_dateTime;
     std::string m_hostInfo;
     std::string m_macAddress;

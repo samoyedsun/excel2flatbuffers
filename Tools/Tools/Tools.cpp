@@ -4,6 +4,7 @@
 #include <winsock2.h>
 #include <iphlpapi.h>
 #include "Utils.h"
+#include <thread>
 
 #pragma comment(lib, "iphlpapi.lib")
 
@@ -109,11 +110,12 @@ enum EOpenType
 {
     EOT_InPathCodeConvert = 1 << 0,
     EOT_OutPathCodeConvert = 1 << 1,
-    EOT_OpenSystemInfo = 1 << 2,
+    EOT_SendCommand = 1 << 2,
+    EOT_OpenSystemInfo = 1 << 3,
 };
 
 int main(int argc, char* argv[]) {
-    STDOUT << "参数数量: " << argc << ",编码：" << GetConsoleCP() << STDEND;
+    STDOUT << "参数数量: " << argc << ",编码：" << GetConsoleCP() << ",线程：" << std::thread::hardware_concurrency() << STDEND;
     if (argc < 5 || argc > 6) {
         STDERR << "用法: " << argv[0] << " <schema.bfbs> <excel.xlsx> <output.bin> <flag>" << STDEND;
         return -1;
@@ -143,6 +145,7 @@ int main(int argc, char* argv[]) {
     STDOUT << "excelFile: " << excelFile << STDEND;
     STDOUT << "outputFile: " << outputFile << STDEND;
     bool outpncc = openFlag & EOT_OutPathCodeConvert;
+    bool sendcmd = openFlag & EOT_SendCommand;
     std::string currentTime, hostInfo, localAddress;
     if (openFlag & EOT_OpenSystemInfo) {
         currentTime = GetCurrentTimeString();
@@ -150,7 +153,7 @@ int main(int argc, char* argv[]) {
         localAddress = GetLocalAddress();
     }
     ExcelToFlatBuffer converter;
-    converter.SetSymbol(outpncc, currentTime, hostInfo, localAddress);
+    converter.SetSymbol(sendcmd, outpncc, currentTime, hostInfo, localAddress);
     if (!converter.Convert(metadataFile, bfbsFile, excelFile, outputFile)) {
         STDERR << "转换失败: " << converter.GetLastError() << STDEND;
         return -2;

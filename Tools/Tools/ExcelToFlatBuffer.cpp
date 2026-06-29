@@ -14,15 +14,9 @@ ExcelToFlatBuffer::ExcelToFlatBuffer() {
     m_pSchema = nullptr;
 }
 
-void ExcelToFlatBuffer::SetSymbol(bool sendcmd, bool outpncc
-    , const std::string& dateTime
-    , const std::string& hostInfo
-    , const std::string& macAddress) {
+void ExcelToFlatBuffer::SetSymbol(bool sendcmd, bool outpncc) {
     m_outPathNeedCodeConversion = outpncc;
     m_sendCommand = sendcmd;
-    m_dateTime = dateTime;
-    m_hostInfo = hostInfo;
-    m_macAddress = macAddress;
 }
 
 bool ExcelToFlatBuffer::Convert(
@@ -34,18 +28,24 @@ bool ExcelToFlatBuffer::Convert(
         auto processId = GetProcessId();
         STDCMD << "@processid(" << processId << ")" << STDEND;
     }
-    // 提取文件名用于查找元数据
-    m_excelFileName = GetFilenameWithoutExt(excelPath);
-    // 加载 Schema
-    if (!LoadSchema(bfbsPath)) {
-        return false;
+    try {
+        // 提取文件名用于查找元数据
+        m_excelFileName = GetFilenameWithoutExt(excelPath);
+        // 加载 Schema
+        if (!LoadSchema(bfbsPath)) {
+            return false;
+        }
+        // 加载 Metadata
+        if (!LoadMetadata(metadataPath)) {
+            return false;
+        }
+        // 解析 Excel
+        if (!ParseExcel(excelPath, outputPath)) {
+            return false;
+        }
     }
-    // 加载 Metadata
-    if (!LoadMetadata(metadataPath)) {
-        return false;
-    }
-    // 解析 Excel
-    if (!ParseExcel(excelPath, outputPath)) {
+    catch (const std::exception& e) {
+        m_lastError = std::string(e.what());
         return false;
     }
     return true;
@@ -362,141 +362,118 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
 }
 
 bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::string& outputPath) {
-    try {
-        OpenXLSX::XLDocument doc(excelPath);;
-        STDOUT << "=== Excel 信息 ===" << STDEND;
-        std::map<std::string, OpenXLSX::XLWorksheet> sheets;
-        auto workbook = doc.workbook();
-        int sheetCount = workbook.sheetCount();
-        STDOUT << "总共有 " << sheetCount << " 个工作表" << STDEND;
-        std::vector<std::string> sheetNames = workbook.sheetNames();
-        for (const auto& sheeName : sheetNames) {
-            auto ws = workbook.worksheet(sheeName);
-            sheets.emplace(toLower(sheeName), ws);
+    OpenXLSX::XLDocument doc(excelPath);;
+    STDOUT << "=== Excel 信息 ===" << STDEND;
+    std::map<std::string, OpenXLSX::XLWorksheet> sheets;
+    auto workbook = doc.workbook();
+    int sheetCount = workbook.sheetCount();
+    STDOUT << "总共有 " << sheetCount << " 个工作表" << STDEND;
+    std::vector<std::string> sheetNames = workbook.sheetNames();
+    for (const auto& sheeName : sheetNames) {
+        auto ws = workbook.worksheet(sheeName);
+        sheets.emplace(toLower(sheeName), ws);
+    }
+
+    //============================================================
+    flatbuffers::FlatBufferBuilder builder(1024);
+    m_tblOffsets.clear();
+
+    auto pRootTable = m_pSchema->root_table();
+    if (!pRootTable) {
+        m_lastError = "未找到根表定义";
+        return false;
+    }
+
+    // 检查元数据中是否有当前 Excel 文件的配置
+    if (!m_metadataRoot.contains(m_excelFileName)) {
+        m_lastError = "未找到对应的元数据: " + m_excelFileName;
+        return false;
+    }
+
+    auto tblMetadata = m_metadataRoot[m_excelFileName];
+
+    // 遍历根表的所有字段
+    for (auto pField : *pRootTable->fields()) {
+        if (!pField) continue;
+
+        if (pField->type()->base_type() == reflection::Vector) {
+            auto typeElement = pField->type()->element();
+            std::stringstream os;
+            os << "sheet:" << pField->name()->str();
+            os << "\ttypeElement:" << typeElement;
+
+            if (typeElement == reflection::Obj) {
+                auto typeIndex = pField->type()->index();
+                os << " typeIndex:" << typeIndex;
+
+                if (typeIndex >= 0) {
+                    auto pObject = m_pSchema->objects()->Get(typeIndex);
+                    os << " typeName:" << pObject->name()->str();
+
+                    // 检查工作表是否存在
+                    if (sheets.find(pField->name()->str()) == sheets.end()) {
+                        STDERR << "错误: 未找到对应的数据表 "
+                            << m_excelFileName << ":" << pField->name()->str() << STDEND;
+                        continue;
+                    }
+
+                    // 检查元数据是否存在
+                    if (!tblMetadata.contains(pObject->name()->str())) {
+                        STDERR << "错误: 未找到对应表字段的元数据 "
+                            << m_excelFileName << ":" << pObject->name()->str() << STDEND;
+                        continue;
+                    }
+
+                    auto infoMetadata = tblMetadata[pObject->name()->str()];
+                    InfoOffsetsType infoOffsets;
+                    OpenXLSX::XLWorksheet ws = sheets[pField->name()->str()];
+                    size_t maxRow = ws.rowCount();
+                    size_t maxColumn = ws.columnCount();
+                    STDOUT << "sheet:" << pField->name()->str() << "\t行数：" << maxRow << "\t列数：" << maxColumn << STDEND;
+                    ReadExcelSheet(ws, builder, infoOffsets, pObject, infoMetadata);
+                    m_tblOffsets.emplace(pField->name()->str(), infoOffsets);
+                }
+            }
+            STDOUT << os.str() << STDEND;
         }
+    }
 
-        //============================================================
-        flatbuffers::FlatBufferBuilder builder(1024);
-        m_tblOffsets.clear();
+    // 构建最终输出
+    if (!m_tblOffsets.empty()) {
+        auto tableStart = builder.StartTable();
 
-        auto pRootTable = m_pSchema->root_table();
-        if (!pRootTable) {
-            m_lastError = "未找到根表定义";
-            return false;
-        }
-
-        // 检查元数据中是否有当前 Excel 文件的配置
-        if (!m_metadataRoot.contains(m_excelFileName)) {
-            m_lastError = "未找到对应的元数据: " + m_excelFileName;
-            return false;
-        }
-
-        auto tblMetadata = m_metadataRoot[m_excelFileName];
-
-        // 遍历根表的所有字段
         for (auto pField : *pRootTable->fields()) {
-            if (!pField) continue;
-
+            if (!pField)
+                continue;
             if (pField->type()->base_type() == reflection::Vector) {
-                auto typeElement = pField->type()->element();
-                std::stringstream os;
-                os << "sheet:" << pField->name()->str();
-                os << "\ttypeElement:" << typeElement;
-
-                if (typeElement == reflection::Obj) {
-                    auto typeIndex = pField->type()->index();
-                    os << " typeIndex:" << typeIndex;
-
-                    if (typeIndex >= 0) {
-                        auto pObject = m_pSchema->objects()->Get(typeIndex);
-                        os << " typeName:" << pObject->name()->str();
-
-                        // 检查工作表是否存在
-                        if (sheets.find(pField->name()->str()) == sheets.end()) {
-                            STDERR << "错误: 未找到对应的数据表 "
-                                << m_excelFileName << ":" << pField->name()->str() << STDEND;
-                            continue;
-                        }
-
-                        // 检查元数据是否存在
-                        if (!tblMetadata.contains(pObject->name()->str())) {
-                            STDERR << "错误: 未找到对应表字段的元数据 "
-                                << m_excelFileName << ":" << pObject->name()->str() << STDEND;
-                            continue;
-                        }
-
-                        auto infoMetadata = tblMetadata[pObject->name()->str()];
-                        InfoOffsetsType infoOffsets;
-                        OpenXLSX::XLWorksheet ws = sheets[pField->name()->str()];
-                        size_t maxRow = ws.rowCount();
-                        size_t maxColumn = ws.columnCount();
-                        STDOUT << "sheet:" << pField->name()->str() << "\t行数：" << maxRow << "\t列数：" << maxColumn << STDEND;
-                        ReadExcelSheet(ws, builder, infoOffsets, pObject, infoMetadata);
-                        m_tblOffsets.emplace(pField->name()->str(), infoOffsets);
+                auto elementType = pField->type()->element();
+                if (elementType == reflection::Obj && pField->type()->index() >= 0) {
+                    auto it = m_tblOffsets.find(pField->name()->str());
+                    if (it != m_tblOffsets.end()) {
+                        auto infosVector = builder.CreateVector(it->second);
+                        builder.AddOffset(pField->offset(), infosVector);
                     }
                 }
-                STDOUT << os.str() << STDEND;
             }
         }
 
-        // 构建最终输出
-        if (!m_tblOffsets.empty()) {
-            auto tableStart = builder.StartTable();
+        auto tblOffset = builder.EndTable(tableStart);
+        builder.Finish<reflection::Object>(tblOffset);
 
-            for (auto pField : *pRootTable->fields()) {
-                if (!pField)
-                    continue;
-                if (pField->type()->base_type() == reflection::Vector) {
-                    auto elementType = pField->type()->element();
-                    if (elementType == reflection::Obj && pField->type()->index() >= 0) {
-                        auto it = m_tblOffsets.find(pField->name()->str());
-                        if (it != m_tblOffsets.end()) {
-                            auto infosVector = builder.CreateVector(it->second);
-                            builder.AddOffset(pField->offset(), infosVector);
-                        }
-                    }
-                }
-                else {
-                    if (pField->type()->base_type() == reflection::String) {
-                        if (pField->name()->str() == "__date_time") {
-                            auto strOffset = builder.CreateString(m_dateTime);
-                            builder.AddOffset(pField->offset(), strOffset);
-                        }
-                        else if (pField->name()->str() == "__host_info") {
-                            auto strOffset = builder.CreateString(m_hostInfo);
-                            builder.AddOffset(pField->offset(), strOffset);
-                        }
-                        else if (pField->name()->str() == "__mac_address") {
-                            auto strOffset = builder.CreateString(m_macAddress);
-                            builder.AddOffset(pField->offset(), strOffset);
-                        }
-                    }
-                }
-            }
+        m_outputData.assign(builder.GetBufferPointer(),
+            builder.GetBufferPointer() + builder.GetSize());
 
-            auto tblOffset = builder.EndTable(tableStart);
-            builder.Finish<reflection::Object>(tblOffset);
-
-            m_outputData.assign(builder.GetBufferPointer(),
-                builder.GetBufferPointer() + builder.GetSize());
-
-            std::string validFilePath = outputPath;
-            if (m_outPathNeedCodeConversion)
-                validFilePath = Utf8ToGbk(outputPath);
-            if (!WriteFile(validFilePath, m_outputData)) {
-                m_lastError = "无法写入文件: " + outputPath;
-                return false;
-            }
-            STDOUT << "写入文件(" << m_outputData.size() << " 字节): " << outputPath << STDEND;
-            return true;
+        std::string validFilePath = outputPath;
+        if (m_outPathNeedCodeConversion)
+            validFilePath = Utf8ToGbk(outputPath);
+        if (!WriteFile(validFilePath, m_outputData)) {
+            m_lastError = "无法写入文件: " + outputPath;
+            return false;
         }
-
-        m_lastError = "没有找到任何有效的数据表";
-        return false;
-
+        STDOUT << "写入文件(" << m_outputData.size() << " 字节): " << outputPath << STDEND;
+        return true;
     }
-    catch (const std::exception& e) {
-        m_lastError = "构建输出失败: " + std::string(e.what());
-        return false;
-    }
+
+    m_lastError = "没有找到任何有效的数据表";
+    return false;
 }

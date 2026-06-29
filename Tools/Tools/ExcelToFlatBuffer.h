@@ -19,7 +19,7 @@ public:
     // 构造函数
     ExcelToFlatBuffer();
 
-    void SetSymbol(bool sendcmd, bool outpncc, const std::string& dateTime, const std::string& hostInfo, const std::string& macAddress);
+    void SetSymbol(bool sendcmd, bool outpncc);
 
     // 执行转换
     bool Convert(const std::string& metadataPath, const std::string& bfbsPath,
@@ -54,9 +54,6 @@ private:
 
     bool m_outPathNeedCodeConversion = false;
     bool m_sendCommand = false;
-    std::string m_dateTime;
-    std::string m_hostInfo;
-    std::string m_macAddress;
 };
 
 #endif  // INCLUDE_EXCELTOFLATBUFFER_HPP_

@@ -142,11 +142,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ExcelToFlatBuffer.cpp" />
+    <ClCompile Include="FlatBufferToExcel.cpp" />
     <ClCompile Include="Tools.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExcelToFlatBuffer.h" />
+    <ClInclude Include="FlatBufferToExcel.h" />
     <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="nlohmann\json_fwd.hpp" />
     <ClInclude Include="Utils.h" />

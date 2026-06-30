@@ -27,6 +27,9 @@
     <ClCompile Include="Tools.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="FlatBufferToExcel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nlohmann\json.hpp">
@@ -39,6 +42,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ExcelToFlatBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FlatBufferToExcel.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

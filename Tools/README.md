@@ -1,0 +1,3 @@
+- 用法:
+  - Tools.exe convert <metadata.json> <schema.bfbs> <excel.xlsx> <output.bytes> [flag]
+  - Tools.exe reverse  <metadata.json> <schema.bfbs> <input.bytes>  <output.xlsx> [flag]

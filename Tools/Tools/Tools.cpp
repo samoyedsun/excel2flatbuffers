@@ -2,25 +2,23 @@
 #include "./FlatBufferToExcel.h"
 #include <chrono>
 #include <sstream>
-#include <windows.h>
 #include "Utils.h"
 
 enum EOpenType
 {
     EOT_InPathCodeConvert = 1 << 0,
-    EOT_OutPathCodeConvert = 1 << 1,
-    EOT_SendCommand = 1 << 2,
+    EOT_SendCommand = 1 << 1
 };
 
 void printUsage(const char* programName) {
     STDERR << "用法:" << STDEND;
     STDERR << "  " << programName << " convert <metadata.json> <schema.bfbs> <excel.xlsx> <output.bytes> [flag]" << STDEND;
     STDERR << "  " << programName << " reverse  <metadata.json> <schema.bfbs> <input.bytes>  <output.xlsx> [flag]" << STDEND;
-    STDERR << "flag: 1=输入路径GBK转UTF8, 2=输出路径UTF8转GBK, 4=发送进度命令" << STDEND;
+    STDERR << "flag: 1=输入路径GBK转UTF8, 2=发送进度命令" << STDEND;
 }
 
 int main(int argc, char* argv[]) {
-    STDOUT << "参数数量:" << argc << ",编码:" << GetConsoleCP() << STDEND;
+    STDOUT << "参数数量:" << argc << ",编码:" << MyGetConsoleCP() << STDEND;
     if (argc < 2) {
         printUsage(argv[0]);
         return -1;
@@ -52,11 +50,10 @@ int main(int argc, char* argv[]) {
     STDOUT << "bfbsFile: " << bfbsFile << STDEND;
     STDOUT << "inputPath: " << inputPath << STDEND;
     STDOUT << "outputPath: " << outputPath << STDEND;
-    bool outpncc = openFlag & EOT_OutPathCodeConvert;
     bool sendcmd = openFlag & EOT_SendCommand;
     if (command == "convert") {
         ExcelToFlatBuffer converter;
-        converter.SetSymbol(sendcmd, outpncc);
+        converter.SetSymbol(sendcmd);
         auto success = converter.Convert(metadataFile, bfbsFile, inputPath, outputPath);
         if (!success) {
             STDERR << "转换失败: " << converter.GetLastError() << STDEND;
@@ -65,7 +62,7 @@ int main(int argc, char* argv[]) {
     }
     else if (command == "reverse") {
         FlatBufferToExcel converter;
-        converter.SetSymbol(sendcmd, outpncc);
+        converter.SetSymbol(sendcmd);
         auto success = converter.Convert(metadataFile, bfbsFile, inputPath, outputPath);
         if (!success) {
             STDERR << "逆向转换失败: " << converter.GetLastError() << STDEND;

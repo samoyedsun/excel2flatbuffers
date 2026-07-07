@@ -1,8 +1,16 @@
 #include "Utils.h"
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <boost/nowide/fstream.hpp>
+
+uint32_t MyGetConsoleCP() {
+	return GetConsoleCP();
+}
 
 std::string Utf8ToGbk(const std::string& utf8_str) {
     int wide_size = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), (int)utf8_str.size(), NULL, 0);
@@ -78,20 +86,20 @@ std::string GetFilenameWithoutExt(const std::string& path) {
 }
 
 bool LoadFile(const std::string& filename, std::vector<uint8_t>& buffer) {
-	std::ifstream file(filename, std::ios::binary | std::ios::ate);
-	if (!file.is_open())
-		return false;
-	size_t size = file.tellg();
-	file.seekg(0, std::ios::beg);
-	buffer.resize(size);
-	file.read(reinterpret_cast<char*>(buffer.data()), size);
-	file.close();
-	return true;
+    boost::nowide::ifstream file(filename.c_str(), std::ios::binary | std::ios::ate);
+    if (!file.is_open())
+        return false;
+    size_t size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    buffer.resize(size);
+    file.read(reinterpret_cast<char*>(buffer.data()), size);
+    file.close();
+    return true;
 }
 bool WriteFile(const std::string& filename, std::vector<uint8_t>& data) {
-	std::ofstream file(filename, std::ios::binary);
-	if (!file.is_open())
-		return false;
+    boost::nowide::ofstream file(filename.c_str(), std::ios::binary);
+    if (!file.is_open())
+        return false;
 	file.write(reinterpret_cast<const char*>(data.data()), data.size());
 	file.close();
 	return true;

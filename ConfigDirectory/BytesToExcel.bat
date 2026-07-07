@@ -21,12 +21,12 @@ if not exist "%TARGET_DIR%" md "%TARGET_DIR%"
 if not "%1"=="" (
 	:: 单个文件导出（有参数时）
     echo 逆向文件 %~nx1 为 %~n1.xlsx 通过 %~n1.bfbs
-    %PROGRAM_DIR%\Tools.exe reverse "%PROGRAM_DIR%\metadata.json" "%PROGRAM_DIR%\%~n1.bfbs" "%EXCEL_DIR%\%~nx1" "%TARGET_DIR%\%~n1.xlsx" 3
+    %PROGRAM_DIR%\Tools.exe reverse "%PROGRAM_DIR%\metadata.json" "%PROGRAM_DIR%\%~n1.bfbs" "%EXCEL_DIR%\%~nx1" "%TARGET_DIR%\%~n1.xlsx" 1
 ) else (
 	:: 批量导出模式（无参数时）
 	for /f %%i in ('dir /b "%EXCEL_DIR%\*.bytes"') do (
 		echo 逆向文件 %%~nxi 为 %%~ni.xlsx 通过 %%~ni.bfbs
-		%PROGRAM_DIR%\Tools.exe reverse "%PROGRAM_DIR%\metadata.json" "%PROGRAM_DIR%\%%~ni.bfbs" "%EXCEL_DIR%\%%~nxi" "%TARGET_DIR%\%%~ni.xlsx" 3
+		%PROGRAM_DIR%\Tools.exe reverse "%PROGRAM_DIR%\metadata.json" "%PROGRAM_DIR%\%%~ni.bfbs" "%EXCEL_DIR%\%%~nxi" "%TARGET_DIR%\%%~ni.xlsx" 1
 	)
 )
 

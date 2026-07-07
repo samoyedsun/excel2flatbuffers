@@ -5,8 +5,7 @@ FlatBufferToExcel::FlatBufferToExcel() {
     m_pSchema = nullptr;
 }
 
-void FlatBufferToExcel::SetSymbol(bool sendcmd, bool outpncc) {
-    m_outPathNeedCodeConversion = outpncc;
+void FlatBufferToExcel::SetSymbol(bool sendcmd) {
     m_sendCommand = sendcmd;
 }
 
@@ -163,10 +162,7 @@ bool FlatBufferToExcel::ParseFlatBuffers(const std::string& bytesPath, const std
 
     // Create Excel document
     OpenXLSX::XLDocument doc;
-    std::string validOutputPath = outputPath;
-    if (m_outPathNeedCodeConversion)
-        validOutputPath = Utf8ToGbk(outputPath);
-    doc.create(validOutputPath, OpenXLSX::XLForceOverwrite);
+    doc.create(outputPath, OpenXLSX::XLForceOverwrite);
     auto workbook = doc.workbook();
 
     bool hasCreatedSheet = false;

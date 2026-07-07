@@ -14,8 +14,7 @@ ExcelToFlatBuffer::ExcelToFlatBuffer() {
     m_pSchema = nullptr;
 }
 
-void ExcelToFlatBuffer::SetSymbol(bool sendcmd, bool outpncc) {
-    m_outPathNeedCodeConversion = outpncc;
+void ExcelToFlatBuffer::SetSymbol(bool sendcmd) {
     m_sendCommand = sendcmd;
 }
 
@@ -463,10 +462,7 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
         m_outputData.assign(builder.GetBufferPointer(),
             builder.GetBufferPointer() + builder.GetSize());
 
-        std::string validFilePath = outputPath;
-        if (m_outPathNeedCodeConversion)
-            validFilePath = Utf8ToGbk(outputPath);
-        if (!WriteFile(validFilePath, m_outputData)) {
+        if (!WriteFile(outputPath, m_outputData)) {
             m_lastError = "无法写入文件: " + outputPath;
             return false;
         }

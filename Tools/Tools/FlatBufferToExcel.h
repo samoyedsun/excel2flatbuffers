@@ -19,7 +19,7 @@ class FlatBufferToExcel {
 public:
     FlatBufferToExcel();
 
-    void SetSymbol(bool sendcmd, bool outpncc);
+    void SetSymbol(bool sendcmd);
 
     // bytes -> Excel 转换
     bool Convert(const std::string& metadataPath,
@@ -53,7 +53,6 @@ private:
     nlohmann::json m_metadataRoot;
     std::string m_excelFileName;
 
-    bool m_outPathNeedCodeConversion = false;
     bool m_sendCommand = false;
 };
 

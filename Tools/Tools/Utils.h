@@ -10,6 +10,7 @@
 #define STDCMD std::cout << "\033[30m"
 #define STDEND "\033[0m" << std::endl
 
+uint32_t MyGetConsoleCP();
 std::string Utf8ToGbk(const std::string& utf8_str);
 std::string GbkToUtf8(const std::string& gbk_str);
 std::string WcharToChar(const std::wstring& wstr);

@@ -299,7 +299,7 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
     flatbuffers::FlatBufferBuilder& builder,
     InfoOffsetsType& infoOffsets,
     const reflection::Object* pObject,
-    nlohmann::json& infoMetadataObj) {
+    nlohmann::json& objMetadata) {
     size_t maxRow = ws.rowCount();
     size_t maxColumn = ws.columnCount();
 
@@ -313,11 +313,19 @@ void ExcelToFlatBuffer::ReadExcelSheet(OpenXLSX::XLWorksheet& ws,
     for (int32_t colIndex = 1; colIndex <= maxColumn; ++colIndex) {
         auto cell = ws.cell(rowIndex, colIndex);
         auto key = cell.getString();
-        if (!infoMetadataObj.contains(key)) {
+        nlohmann::json jsonValue;
+        bool found = false;
+        for (auto& item : objMetadata) {
+            if (item["excelName"] == key) {
+                jsonValue = item["fieldName"];
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
             STDERR << "未找到对应字段的元数据：" << colIndex << "-" << ws.name() << ":" << key << STDEND;
             continue;
         }
-        auto jsonValue = infoMetadataObj[key];
         if (jsonValue.is_null()) {
             // 元数据配空代表不需要导出
             continue;
@@ -428,7 +436,7 @@ bool ExcelToFlatBuffer::ParseExcel(const std::string& excelPath, const std::stri
                     OpenXLSX::XLWorksheet ws = sheets[pField->name()->str()];
                     size_t maxRow = ws.rowCount();
                     size_t maxColumn = ws.columnCount();
-                    STDOUT << "sheet:" << pField->name()->str() << "\t行数：" << maxRow << "\t列数：" << maxColumn << STDEND;
+                    STDOUT << "读取工作表:" << pField->name()->str() << "\t行数：" << maxRow << "\t列数：" << maxColumn << STDEND;
                     ReadExcelSheet(ws, builder, infoOffsets, pObject, infoMetadata);
                     m_tblOffsets.emplace(pField->name()->str(), infoOffsets);
                 }

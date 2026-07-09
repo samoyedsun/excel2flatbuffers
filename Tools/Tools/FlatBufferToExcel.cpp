@@ -147,6 +147,41 @@ std::string FlatBufferToExcel::ReadFieldValue(const flatbuffers::Table* pTable, 
     return "";
 }
 
+void FlatBufferToExcel::WriteExcelSheet(OpenXLSX::XLWorksheet& ws,
+    const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>* pVector,
+    const reflection::Object* pObject,
+    nlohmann::json& objMetadata) {
+    // 写表头（按 metadata 数组顺序输出列），并预解析字段映射
+    std::vector<const reflection::Field*> fieldOrder;
+    int32_t colIndex = 1;
+    for (auto& item : objMetadata) {
+        const auto& fbFieldName = item["fieldName"];
+        if (fbFieldName.is_null()) continue;
+        auto pField = pObject->fields()->LookupByKey(fbFieldName.get<std::string>().c_str());
+        if (!pField) continue;
+        ws.cell(1, colIndex).value() = item["excelName"].get<std::string>();
+        fieldOrder.push_back(pField);
+        colIndex++;
+    }
+
+    // 写数据行
+    size_t maxRow = pVector->size();
+    for (size_t rowIndex = 0; rowIndex < maxRow; ++rowIndex) {
+        int32_t excelRow = static_cast<int32_t>(rowIndex) + 2;
+        auto pChildTable = pVector->Get(static_cast<flatbuffers::uoffset_t>(rowIndex));
+
+        int32_t writeCol = 1;
+        for (auto pField : fieldOrder) {
+            std::string value = ReadFieldValue(pChildTable, pField);
+            ws.cell(excelRow, writeCol).value() = GbkToUtf8(value);
+            writeCol++;
+        }
+        if (m_sendCommand) {
+            STDCMD << "@progress(" << rowIndex << "," << maxRow << ")" << STDEND;
+        }
+    }
+}
+
 bool FlatBufferToExcel::ParseFlatBuffers(const std::string& bytesPath, const std::string& outputPath) {
     std::vector<uint8_t> bytesData;
     if (!LoadFile(bytesPath, bytesData)) {
@@ -167,6 +202,13 @@ bool FlatBufferToExcel::ParseFlatBuffers(const std::string& bytesPath, const std
 
     bool hasCreatedSheet = false;
 
+    // 检查元数据中是否有当前文件的配置
+    if (!m_metadataRoot.contains(m_excelFileName)) {
+        m_lastError = "未找到对应的元数据: " + m_excelFileName;
+        return false;
+    }
+    auto tblMetadata = m_metadataRoot[m_excelFileName];
+
     // Iterate through root table fields (Vector<Obj> fields)
     for (auto pField : *pRootTable->fields()) {
         if (!pField) continue;
@@ -183,13 +225,12 @@ bool FlatBufferToExcel::ParseFlatBuffers(const std::string& bytesPath, const std
 
                 // Get metadata for this object first
                 std::string objName = pObject->name()->str();
-                if (!m_metadataRoot.contains(m_excelFileName) ||
-                    !m_metadataRoot[m_excelFileName].contains(objName)) {
+                if (!tblMetadata.contains(objName)) {
                     STDERR << "未找到对应表字段的元数据: " << objName << STDEND;
                     continue;
                 }
 
-                auto objMetadata = m_metadataRoot[m_excelFileName][objName];
+                auto infoMetadata = tblMetadata[objName];
 
                 // Get the vector (Vector of Offset<Table>)
                 auto pVector = pTable->GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*>(pField->offset());
@@ -203,41 +244,7 @@ bool FlatBufferToExcel::ParseFlatBuffers(const std::string& bytesPath, const std
                 auto ws = workbook.worksheet(sheetName);
                 hasCreatedSheet = true;
 
-                // Build field order from metadata
-                std::vector<const reflection::Field*> fieldOrder;
-                int32_t colIndex = 1;
-
-                // First pass: write header row
-                for (auto childField : *pObject->fields()) {
-                    if (!childField) continue;
-                    auto fbName = childField->name()->str();
-                    for (auto& [excelName, fbFieldName] : objMetadata.items()) {
-                        if (fbFieldName == fbName && !fbFieldName.is_null()) {
-                            ws.cell(1, colIndex).value() = excelName;
-                            fieldOrder.push_back(childField);
-                            colIndex++;
-                            break;
-                        }
-                    }
-                }
-
-                // Write data rows
-                size_t maxRow = pVector->size();
-                for (size_t rowIndex = 0; rowIndex < maxRow; ++rowIndex) {
-                    int32_t excelRow = static_cast<int32_t>(rowIndex) + 2;
-                    auto pChildTable = pVector->Get(static_cast<flatbuffers::uoffset_t>(rowIndex));
-
-                    int32_t writeCol = 1;
-                    for (auto pChildField : fieldOrder) {
-                        if (!pChildField) continue;
-                        std::string value = ReadFieldValue(pChildTable, pChildField);
-                        ws.cell(excelRow, writeCol).value() = GbkToUtf8(value);
-                        writeCol++;
-                    }
-                    if (m_sendCommand) {
-                        STDCMD << "@progress(" << rowIndex << "," << maxRow << ")" << STDEND;
-                    }
-                }
+                WriteExcelSheet(ws, pVector, pObject, infoMetadata);
 
                 STDOUT << "创建工作表: " << sheetName
                        << " (" << pVector->size() << " 行)" << STDEND;

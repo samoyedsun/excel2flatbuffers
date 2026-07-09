@@ -36,6 +36,11 @@ private:
 
     std::string ReadFieldValue(const flatbuffers::Table* pTable, const reflection::Field* pField);
 
+    void WriteExcelSheet(OpenXLSX::XLWorksheet& ws,
+                         const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>* pVector,
+                         const reflection::Object* pObject,
+                         nlohmann::json& objMetadata);
+
     // Template for reading vector values
     template<typename T>
     std::string ReadVectorValueT(const flatbuffers::Vector<T>* pVector) {

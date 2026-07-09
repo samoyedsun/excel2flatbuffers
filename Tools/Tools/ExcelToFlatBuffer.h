@@ -40,7 +40,7 @@ private:
         flatbuffers::FlatBufferBuilder& builder,
         InfoOffsetsType& infoOffsets,
         const reflection::Object* pObject,
-        nlohmann::json& infoMetadataObj);
+        nlohmann::json& objMetadata);
     bool ParseExcel(const std::string& excelPath, const std::string& outputPath);
 
     // 成员变量

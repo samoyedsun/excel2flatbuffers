@@ -1,32 +1,32 @@
 {
   "mydb_misc_tbl": {
-      "MydbMiscInfo": {
-          "编号": "id",
-          "类型": "type",
-          "描述": null,
-          "整数": "num",
-          "整数列表": "num_list",
-          "字符串": "str"
-      },
-      "MydbMiscType1Data": {
-          "编号": "id",
-          "字段": "field"
-      },
-      "MydbMiscType2Data": {
-          "编号": "id",
-          "字段": "field"
-      },
-      "MydbMiscType3Data": {
-          "编号": "id",
-          "字段1": "field1",
-          "字段2": "field2"
-      },
-      "MydbMiscType4Data": {
-          "编号": "id",
-          "字段1": "field1",
-          "字段2": "field2",
-          "字段3": "field3",
-          "字段4": "field4"
-      }
+    "MydbMiscInfo": [
+      {"excelName": "编号", "fieldName": "id"},
+      {"excelName": "类型", "fieldName": "type"},
+      {"excelName": "描述", "fieldName": null},
+      {"excelName": "整数", "fieldName": "num"},
+      {"excelName": "整数列表", "fieldName": "num_list"},
+      {"excelName": "字符串", "fieldName": "str"}
+    ],
+    "MydbMiscType1Data": [
+      {"excelName": "编号", "fieldName": "id"},
+      {"excelName": "字段", "fieldName": "field"}
+    ],
+    "MydbMiscType2Data": [
+      {"excelName": "编号", "fieldName": "id"},
+      {"excelName": "字段", "fieldName": "field"}
+    ],
+    "MydbMiscType3Data": [
+      {"excelName": "编号", "fieldName": "id"},
+      {"excelName": "字段1", "fieldName": "field1"},
+      {"excelName": "字段2", "fieldName": "field2"}
+    ],
+    "MydbMiscType4Data": [
+      {"excelName": "编号", "fieldName": "id"},
+      {"excelName": "字段1", "fieldName": "field1"},
+      {"excelName": "字段2", "fieldName": "field2"},
+      {"excelName": "字段3", "fieldName": "field3"},
+      {"excelName": "字段4", "fieldName": "field4"}
+    ]
   }
 }
